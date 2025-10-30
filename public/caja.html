@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Control de Caja</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="icon" type="image/svg+xml" href="/images/icono.png" />
+  <link href="/css/caja.css" rel="stylesheet" />
+  <link href="/css/teclado.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-keyboard/3.8.67/css/index.min.css"> 
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      background-color: #f1f9ff;
+    }
+
+    .sidebar {
+      width: 280px;
+      background-color: #bce0fd;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 1rem;
+    }
+
+    .sidebar h1 {
+      font-size: 1.8rem;
+      color: #2699fb;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .sidebar button {
+      margin-bottom: 1rem;
+      width: 100%;
+    }
+
+    .content {
+      flex-grow: 1;
+      padding: 2rem;
+    }
+
+    .kpi-box {
+      background-color: #eef4fa;
+      border-left: 6px solid #ff5600;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .kpi-box h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #ff5600;
+    }
+
+    .table-card {
+      background-color: #fff;
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      overflow: hidden;
+    }
+
+    .table-card-header {
+      background-color: #2699fb;
+      color: #fff;
+      padding: 1rem;
+      font-weight: bold;
+    }
+
+    .table-responsive {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    /* Nuevos estilos para los totales */
+    .resumen-totales {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .total-card {
+      background: white;
+      border-radius: 10px;
+      padding: 1.2rem;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      flex: 1;
+      min-width: 200px;
+      border-top: 4px solid;
+    }
+
+    .total-card.efectivo {
+      border-color: #28a745;
+    }
+
+    .total-card.tarjeta {
+      border-color: #17a2b8;
+    }
+
+    .total-card.general {
+      border-color: #ff5600;
+    }
+
+    .total-titulo {
+      font-size: 0.9rem;
+      color: #6c757d;
+      margin-bottom: 0.5rem;
+    }
+
+    .total-valor {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    .total-card.efectivo .total-valor {
+      color: #28a745;
+    }
+
+    .total-card.tarjeta .total-valor {
+      color: #17a2b8;
+    }
+
+    .total-card.general .total-valor {
+      color: #ff5600;
+    }
+
+    /* Mejoras a la tabla */
+    .table th {
+      background-color: #f8f9fa;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .table-hover tbody tr:hover {
+      background-color: rgba(38, 153, 251, 0.1);
+    }
+
+    .monto {
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .monto.efectivo {
+      color: #28a745;
+    }
+
+    .monto.tarjeta {
+      color: #17a2b8;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar de navegación -->
+  <aside class="sidebar">
+    <h1>CONTROL DE CAJA</h1>
+    <button class="btn" id="btnAbrirCaja" data-bs-toggle="modal" data-bs-target="#modalInicio">Abrir Caja</button>
+    <button class="btn" id="btnCerrarCaja">Cerrar Caja</button>    
+    <button class="btn" id="btnActualizar">Actualizar Movimientos</button>
+    <button class="btn" id="btnRetiroEfectivo">Retiro de Efectivo</button>
+    <button class="btn" id="btnVolver">Volver</button>
+  </aside>
+
+  <!-- Contenido principal -->
+  <main class="content">
+    <div id="mensajeCaja" class="mb-3"></div>
+
+    <div id="infoCajaUser" class="mb-4"></div>
+
+    <!-- Resumen de totales -->
+    <div class="resumen-totales" id="resumenTotales">
+      <div class="total-card fondo-inicial">
+        <div class="total-titulo">FONDO INICIAL</div>
+        <div class="total-valor" id="fondoInicial">$0</div>
+      </div>
+      <div class="total-card efectivo">
+        <div class="total-titulo">TOTAL EFECTIVO</div>
+        <div class="total-valor" id="totalEfectivo">$0</div>
+      </div>
+      <div class="total-card tarjeta">
+        <div class="total-titulo">TOTAL TARJETA</div>
+        <div class="total-valor" id="totalTarjeta">$0</div>
+      </div>
+      <div class="total-card balance">
+        <div class="total-titulo">BALANCE ACTUAL EFECTIVO</div>
+        <div class="total-valor" id="balanceActual">$0</div>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-card mb-4">
+      <div class="table-card-header">Movimientos de Caja</div>
+      <div class="table-responsive">
+        <table class="table table-hover table-striped align-middle mb-0" id="tablaCaja">
+          <thead class="table-light text-center">
+            <tr>
+              <th>ID</th>
+              <th>Fecha Registro</th>
+              <th>Hora Registro</th>
+              <th>Tipo Servicio</th>
+              <th>Medio de Pago</th>
+              <th>Monto</th>
+              <th>Usuario</th>                           
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="mensaje" class="mt-3"></div>
+  </main>
+
+  <!-- Modal para iniciar caja -->
+  <div class="modal fade" id="modalInicio" tabindex="-1" aria-labelledby="modalInicioLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content shadow">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="modalInicioLabel">Iniciar Caja</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formInicioCaja">
+            <div class="form-group mb-3">
+              <label for="monto_inicial_modal">Monto Inicial</label>
+              <input type="text" id="monto_inicial_modal" name="monto_inicial" required class="form-control usar-teclado" inputmode="numeric" pattern="[0-9]*" placeholder="Ej: $10000" />
+            </div>
+            <div class="form-group mb-3">
+              <label for="observaciones_modal">Observaciones</label>
+              <textarea id="observaciones_modal" name="observaciones" rows="3" class="form-control usar-teclado"></textarea>
+            </div>
+            <button type="submit" class="btn w-100">Abrir Caja</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Autenticación -->
+  <div class="modal fade" id="modalAuthAdmin" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content shadow">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title">Autenticación Requerida</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formAuthAdmin">
+            <div class="form-group mb-3">
+              <label for="adminUsername">Usuario Administrador</label>
+              <input type="text" id="adminUsername" class="form-control usar-teclado" required>
+            </div>
+            <div class="form-group mb-3">
+              <label for="adminPassword">Contraseña</label>
+              <input type="password" id="adminPassword" class="form-control usar-teclado" required>
+            </div>
+            <button type="submit" class="btn w-100">Verificar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Autenticación para Cierre de Caja -->
+  <div class="modal fade" id="modalAuthCierre" tabindex="-1" aria-labelledby="modalAuthCierreLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header bg-warning">
+          <h5 class="modal-title" id="modalAuthCierreLabel">Autenticación Requerida</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted mb-3">Para cerrar la caja, debe autenticarse con un usuario autorizado (Supervisor, Recaudador o Tesorero).</p>
+          <form id="formAuthCierre">
+            <div class="mb-3">
+              <label for="cierreUsername" class="form-label">Usuario</label>
+              <input type="text" class="form-control usar-teclado" id="cierreUsername" required>
+            </div>
+            <div class="mb-3">
+              <label for="cierrePassword" class="form-label">Contraseña</label>
+              <input type="password" class="form-control usar-teclado" id="cierrePassword" required>
+            </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-warning">Verificar Credenciales</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Retiro -->
+  <div class="modal fade" id="modalRetiro" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content shadow">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title">Retiro de Efectivo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div id="infoAutorizador" class="alert alert-secondary py-2 mb-3 d-none">
+            <small>Autorizado por: <strong id="nombreAutorizador"></strong></small>
+          </div>
+          
+          <div class="alert alert-info">
+            Balance disponible en efectivo: <strong id="balanceDisponible">$0</strong>
+          </div>
+          <form id="formRetiroEfectivo">
+            <div class="form-group mb-3">
+              <label for="montoRetiro">Monto a Retirar</label>
+              <input type="text" id="montoRetiro" class="form-control usar-teclado" inputmode="numeric" required>
+            </div>
+            <button type="submit" class="btn w-100">Realizar Retiro</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor del teclado -->
+  <div id="tecladoContainer" style="display: none; position: fixed; bottom: 0; width: 100%; z-index: 9999; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+    <div class="simple-keyboard"></div>
+  </div>  
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/js/login.js"></script>
+  <script src="/js/caja.js"></script>
+  <!-- Scripts para teclado -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-keyboard/3.8.67/index.min.js"></script>
+  <script src="/js/teclado.js"></script>
+  <script>
+    tecladoVirtual.init();
+
+    // Activar el teclado en cualquier input con clase 'usar-teclado'
+    document.querySelectorAll('.usar-teclado').forEach(input => {
+      input.addEventListener('focus', () => {
+        tecladoVirtual.show(input);
+      });
+    });
+  </script>
+</body>
+</html>

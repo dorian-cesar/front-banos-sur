@@ -1,0 +1,322 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  color: #2699fb;
+  background-color: #f1f9ff;
+  min-height: 100vh;
+  overflow-x: hidden;
+  display: flex;
+}
+
+/* Sidebar de navegación */
+.sidebar {
+  width: 260px;
+  background-color: #bce0fd;
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 1rem;
+}
+
+.sidebar h1 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #2699fb;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.sidebar button {
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+/* Botón personalizado naranja */
+.btn {
+  background-color: #ff5600;
+  color: #f5f5f5;
+  font-weight: bold;
+  font-size: 1rem;
+  border: 2px solid #ff5600;
+  border-radius: 24px;
+  box-shadow: inset 0px 3px 6px #ffffff;
+  padding: 0.6rem 1.5rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+  background-color: #e14b00;
+  color: #fff;
+}
+
+.btn:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Contenedor principal */
+.content {
+  flex-grow: 1;
+  padding: 2rem;
+}
+
+/* Caja resumen tipo KPI */
+.kpi-box {
+  background-color: #eef4fa;
+  border-left: 6px solid #ff5600;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  display: none;
+}
+
+.kpi-box h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: #ff5600;
+}
+
+/* Tarjeta de tabla */
+.table-card {
+  background-color: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.table-card-header {
+  background-color: #2699fb;
+  color: #fff;
+  padding: 1rem;
+  font-weight: bold;
+}
+
+/* Tabla centrada */
+.table th,
+.table td {
+  vertical-align: middle;
+  text-align: center;
+}
+
+/* Formularios */
+.form-group label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Mensajes */
+#mensaje,
+#mensajeCaja {
+  margin-top: 1rem;
+}
+
+/* Nuevos estilos para los totales */
+.resumen-totales {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.total-card {
+  background: white;
+  border-radius: 10px;
+  padding: 1.2rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  flex: 1;
+  min-width: 200px;
+  border-top: 4px solid;
+}
+
+.total-card.efectivo {
+  border-color: #28a745;
+}
+
+.total-card.tarjeta {
+  border-color: #17a2b8;
+}
+
+.total-card.general {
+  border-color: #ff5600;
+}
+
+.total-titulo {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.total-valor {
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+
+.total-card.efectivo .total-valor {
+  color: #28a745;
+}
+
+.total-card.tarjeta .total-valor {
+  color: #17a2b8;
+}
+
+.total-card.general .total-valor {
+  color: #ff5600;
+}
+
+/* Mejoras a la tabla */
+.table th {
+  background-color: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(38, 153, 251, 0.1);
+}
+
+.monto {
+  font-weight: 600;
+  text-align: right;
+}
+
+.monto.efectivo {
+  color: #28a745;
+}
+
+.monto.tarjeta {
+  color: #17a2b8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .resumen-totales {
+    flex-direction: column;
+  }
+  
+  .total-card {
+    min-width: 100%;
+  }
+  
+  body {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    padding: 1rem;
+  }
+}
+
+/* Estilos para la tarjeta de fondo inicial */
+.total-card.fondo-inicial {
+  border-color: #6f42c1;
+}
+
+.total-card.fondo-inicial .total-valor {
+  color: #6f42c1;
+}
+
+/* Estilos para la tarjeta de balance */
+.total-card.balance {
+  border-color: #fd7e14;
+}
+
+.total-card.balance .total-valor {
+  color: #fd7e14;
+}
+
+/* Ajustar responsive para más tarjetas */
+@media (max-width: 1200px) {
+  .resumen-totales {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .resumen-totales {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Estilos para el historial de retiros */
+.retiro-item {
+  border-left: 4px solid #dc3545;
+  padding-left: 1rem;
+  margin-bottom: 1rem;
+}
+
+.retiro-fecha {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.retiro-monto {
+  font-weight: bold;
+  color: #dc3545;
+}
+
+.retiro-motivo {
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+}
+
+/* Tarjeta de total retirado */
+.total-card.retirado {
+  border-color: #dc3545;
+}
+
+.total-card.retirado .total-valor {
+  color: #dc3545;
+}
+
+/* Mejoras para modales */
+.modal-header {
+  border-bottom: 2px solid rgba(0,0,0,0.1);
+}
+
+.modal-content {
+  border-radius: 12px;
+  border: none;
+}
+
+/* Estilos para montos de retiros */
+.monto.retiro {
+  color: #dc3545; /* Rojo para retiros */
+  font-weight: bold;
+}
+
+/* Opcional: fondo diferente para filas de retiros */
+.table tbody tr td.monto.retiro {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+#infoAutorizador {
+  border-left: 4px solid #6c757d;
+  margin-bottom: 15px;
+}
+
+#infoAutorizador strong {
+  text-transform: capitalize;
+}
+
+#modalAuthCierre .modal-header {
+  background-color: #ffc107;
+  color: #000;
+}
+
+#modalAuthCierre .btn-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+#modalAuthCierre .btn-warning:hover {
+  background-color: #e0a800;
+  border-color: #e0a800;
+}

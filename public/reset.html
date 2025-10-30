@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restablecer Contraseña - Pullman</title>
+    <link rel="icon" type="image/svg+xml" href="/images/icono.png" />
+    <link href="/css/login.css" rel="stylesheet" />
+    <link href="/css/teclado.css" rel="stylesheet" />
+    <style>
+        .reset-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .reset-form {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            border: 3px solid #ff5600;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .reset-title {
+            text-align: center;
+            color: #ff5600;    
+            font: normal normal bold 28px/32px Arial;
+            letter-spacing: 0px;  
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-message {
+            text-align: center;
+            color: #2699fb;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            text-align: center;
+            color: #ff0000;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #ffeeee;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .success-message {
+            text-align: center;
+            color: #009900;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #eeffee;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .password-rules {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .back-to-login {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .back-to-login a {
+            color: #2699fb;
+            text-decoration: none;
+        }
+        
+        .back-to-login a:hover {
+            text-decoration: underline;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <img src="/images/LOGOTIPO_PB_NARANJO_NORMA@2x.png" alt="Logo Pullman" class="logo-pullman" />
+            <h1>SUITE SERVICIOS PULLMAN</h1>
+            <img src="/images/wit@2x.png" alt="Logo Wit" class="logo-wit" />
+        </nav>
+    </header>
+
+    <main class="reset-container">
+        <form id="resetForm" class="reset-form">
+            <h2 class="reset-title">Restablecer Contraseña</h2>
+            
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+            <div id="loading" class="loading">
+                <p>Procesando, por favor espere...</p>
+            </div>
+            
+            <div id="tokenSection">
+                <div class="info-message">
+                    <p>Ingresa tu nueva contraseña a continuación.</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPassword">Nueva Contraseña</label>
+                    <input type="password" id="newPassword" required class="user-input usar-teclado" 
+                           placeholder="Ingresa tu nueva contraseña" />
+                    <div class="password-rules">
+                        La contraseña debe tener al menos 6 caracteres.
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmar Contraseña</label>
+                    <input type="password" id="confirmPassword" required class="user-input usar-teclado" 
+                           placeholder="Confirma tu nueva contraseña" />
+                </div>
+                
+                <div class="text-center">
+                    <button type="submit" class="ingresar-button">Restablecer Contraseña</button>
+                </div>
+            </div>
+            
+            <div class="back-to-login">
+                <a href="/login.html">Volver al Inicio de Sesión</a>
+            </div>
+        </form>
+    </main>
+    
+    <!-- Contenedor del teclado -->
+    <div id="tecladoContainer" style="display: none; position: fixed; bottom: 0; width: 100%; z-index: 9999; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+      <div class="simple-keyboard"></div>
+    </div>
+
+    <!-- Scripts para teclado -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-keyboard/3.8.67/index.min.js"></script>
+    <script src="/js/teclado.js"></script>
+    
+    <script>
+        // Inicializar teclado virtual
+        if (typeof tecladoVirtual !== 'undefined') {
+            tecladoVirtual.init();
+
+            // Activar el teclado en cualquier input con clase 'usar-teclado'
+            document.querySelectorAll('.usar-teclado').forEach(input => {
+                input.addEventListener('focus', () => {
+                    tecladoVirtual.show(input);
+                });
+            });
+        }
+
+        // Variables globales
+        let userData = null;
+
+        // Verificar token en la URL y obtener datos del usuario
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            
+            if (!token) {
+                // No hay token, redirigir al login
+                showError('Token no válido o ha expirado. Redirigiendo...');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 3000);
+                return;
+            }
+            
+            // Verificar si el token es válido y obtener datos del usuario
+            verifyTokenAndGetUserData(token);
+            
+            // Manejar el envío del formulario
+            const resetForm = document.getElementById('resetForm');
+            resetForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                // Validar que las contraseñas coincidan
+                if (newPassword !== confirmPassword) {
+                    showError('Las contraseñas no coinciden.');
+                    return;
+                }
+                
+                // Validar fortaleza de la contraseña
+                if (!validatePassword(newPassword)) {
+                    showError('La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, un número y un carácter especial.');
+                    return;
+                }
+                
+                // Enviar solicitud para restablecer contraseña
+                await resetPassword(newPassword, token);
+            });
+        });
+        
+        // Verificar token en frontend (en este caso basta con que exista en la URL)
+        function verifyTokenAndGetUserData(token) {
+            // Como el backend valida todo en el reset, aquí solo comprobamos que exista
+            if (!token) {
+                showError('Token no válido o ha expirado. Redirigiendo...');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 3000);
+            }
+        }
+
+        // Restablecer contraseña en backend
+        async function resetPassword(newPassword, token) {
+            try {
+                showLoading(true);
+                
+                // Para desarrollo, usar localhost:4000
+                const apiUrl = 'https://localhost:4000/api/auth/reset';
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ newPassword, token }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.message || 'Error al restablecer contraseña.');
+                }
+
+                showLoading(false);
+                showSuccess('¡Tu contraseña se restableció correctamente! Redirigiendo...');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 3000);
+            } catch (error) {
+                showLoading(false);
+                showError(error.message);
+            }
+        }
+
+        // Validación de contraseña: al menos 6 caracteres
+        function validatePassword(password) {
+            return password.length >= 6;
+        }       
+        
+        // Función para mostrar mensaje de error
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // Ocultar mensaje de éxito si está visible
+            document.getElementById('successMessage').style.display = 'none';
+        }
+        
+        // Función para mostrar mensaje de éxito
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            
+            // Ocultar mensaje de error si está visible
+            document.getElementById('errorMessage').style.display = 'none';
+            
+            // Deshabilitar el formulario
+            document.getElementById('resetForm').reset();
+            document.querySelectorAll('input, button').forEach(element => {
+                element.disabled = true;
+            });
+        }
+        
+        // Función para mostrar/ocultar loading
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>

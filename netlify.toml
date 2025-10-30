@@ -1,0 +1,10 @@
+[build]
+  publish = "public"
+  base = "/"
+
+# Opcional: Si quieres que login.html sea la página principal
+[[redirects]]
+  from = "/"
+  to = "/login.html"
+  status = 200
+  force = true

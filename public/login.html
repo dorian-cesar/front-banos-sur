@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Login Pullman</title>
+    <link rel="icon" type="image/svg+xml" href="/images/icono.png" />
+    <link href="/css/login.css" rel="stylesheet" />
+    <link href="/css/teclado.css" rel="stylesheet" />
+    <!-- simple keyboard -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-keyboard/3.8.67/css/index.min.css">    
+    <script src="/js/login.js" defer></script>  
+    <style>
+      /* Asegurar que el teclado aparezca sobre el modal */
+      #tecladoContainer {
+        z-index: 1001 !important;
+      }
+      .modal {
+        z-index: 1000;
+      }
+      .modal-content {
+        z-index: 1002;
+        position: relative;
+      }
+
+      /* --- Estilos para el ojo de la contraseña --- */
+      .password-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+      }
+
+      .password-wrapper input {
+        flex: 1;
+        padding-right: 36px;
+        box-sizing: border-box;
+        height: 42px;
+      }
+
+      .toggle-password {
+        position: absolute;
+        right: 10px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 0;
+        line-height: 0;
+      }
+
+      .toggle-password svg {
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: #666;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        transition: stroke 0.2s ease;
+      }
+
+      .toggle-password:hover svg {
+        stroke: #000;
+      }
+
+      /* Estado inicial: ojo abierto visible, cerrado oculto */
+      .eye-closed {
+        display: none;
+      }
+
+      /* Cuando está activo (mostrando contraseña) */
+      .toggle-password.active svg {
+        stroke: #ff6600; /* naranja Pullman */
+      }
+
+      .toggle-password.active .eye-open {
+        display: none;
+      }
+
+      .toggle-password.active .eye-closed {
+        display: inline;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <img src="/images/LOGOTIPO_PB_NARANJO_NORMA@2x.png" alt="Logo Pullman" class="logo-pullman" />
+        <h1>SUITE SERVICIOS PULLMAN</h1>
+        <img src="/images/wit@2x.png" alt="Logo Wit" class="logo-wit" />
+      </nav>
+    </header>
+
+    <main class="login-main">
+      <form id="loginForm" class="login-form">
+        <h2 class="login-title">Iniciar Sesión</h2>
+        <div class="form-group">
+          <label>Usuario</label>          
+          <input type="email" id="email" required class="user-input usar-teclado" />
+        </div>
+
+        <div class="form-group">
+          <label>Contraseña</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" required class="user-input usar-teclado" />          
+            <button type="button" id="togglePassword" class="toggle-password" aria-label="Mostrar/Ocultar contraseña" aria-pressed="false">
+              <svg id="iconEye" viewBox="0 0 24 24" aria-hidden="true">
+                <!-- OJO ABIERTO -->
+                <g class="eye-open">
+                  <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </g>
+                <!-- OJO CERRADO (TACHADO) -->
+                <g class="eye-closed">
+                  <path d="M9.9 4.24A10.94 10.94 0 0112 5c7 0 11 7 11 7a22.05 22.05 0 01-5.08 5.96"></path>
+                  <path d="M17.94 17.94A10.94 10.94 0 0112 19c-7 0-11-7-11-7a22.05 22.05 0 015.08-5.96"></path>
+                  <path d="M1 1L23 23"></path>
+                  <path d="M14.12 14.12A3 3 0 119.88 9.88"></path>
+                </g>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="text-center">
+          <button type="submit" class="ingresar-button">Ingresar</button>
+        </div>
+
+        <div class="olvido-contrasena">
+          <a href="#" id="olvidoContrasena">¿Olvidaste tu contraseña?</a>
+        </div>
+      </form>
+    </main> 
+
+    <!-- Modal para recuperar contraseña -->
+    <div id="modalRecuperar" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Recuperar Contraseña</h2>
+        <p>Te enviaremos un correo con un enlace para reestablecer tu contraseña.</p>
+        <form id="formRecuperar">
+          <div class="form-group">
+            <input type="email" id="emailRecuperar" required class="user-input usar-teclado" placeholder="Correo electrónico" />
+          </div>
+          <div class="text-center">
+            <button type="submit" class="ingresar-button">Enviar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <button onclick="apagarSistema()" class="btn btn-danger" style="position:fixed; bottom:10px; left:10px; z-index:1000;">Apagar</button>  
+    
+    <div id="tecladoContainer" style="display: none; position: fixed; bottom: 0; width: 100%; z-index: 1001; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+      <div class="simple-keyboard"></div>
+    </div>    
+
+    <script>
+      function apagarSistema() {
+        if (confirm("¿Estás seguro que deseas apagar el sistema?")) {
+          fetch('http://localhost:3000/api/apagar', { method: 'POST' })
+            .then(res => {
+              if (!res.ok) throw new Error('Error al apagar el sistema');
+            })
+            .catch(err => {
+              alert("No se pudo apagar el sistema: " + err.message);
+            });
+        }
+      }
+
+      // Mostrar / Ocultar contraseña (sin re-renderizar SVG)
+      const togglePassword = document.getElementById('togglePassword');
+      const passwordInput = document.getElementById('password');
+
+      togglePassword.addEventListener('click', () => {
+        const toText = passwordInput.type === 'password';
+        passwordInput.type = toText ? 'text' : 'password';
+        togglePassword.classList.toggle('active', toText);
+        togglePassword.setAttribute('aria-pressed', String(toText));
+      });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-keyboard/3.8.67/index.min.js"></script>
+    <script src="/js/teclado.js"></script>
+    <script>
+      if (typeof tecladoVirtual !== 'undefined') {
+        tecladoVirtual.init();
+        document.querySelectorAll('.usar-teclado').forEach(input => {
+          input.addEventListener('focus', () => {
+            tecladoVirtual.show(input);
+          });
+        });
+      }
+    </script>
+  </body>
+</html>

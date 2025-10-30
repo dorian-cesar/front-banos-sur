@@ -532,7 +532,7 @@ async function continuarConPago(metodoPago) {
     }
 
   } else if (metodoPago === "EFECTIVO_LOTE") {
-    const cantidad = await seleccionarCantidadTicketsAccesible();
+    const cantidad = 10 ;//await seleccionarCantidadTicketsAccesible();
     if (!cantidad || cantidad <= 0) {
       hideSpinner();
       cerrarModalPago();

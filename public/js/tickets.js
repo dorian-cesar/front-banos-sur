@@ -532,125 +532,132 @@ async function continuarConPago(metodoPago) {
     }
 
   } else if (metodoPago === "EFECTIVO_LOTE") {
-    const cantidad = await seleccionarCantidadTicketsAccesible();
-    if (!cantidad || cantidad <= 0) {
-      hideSpinner();
-      cerrarModalPago();
-      return;
-    }
+  const cantidad = await seleccionarCantidadTicketsAccesible();
+  if (!cantidad || cantidad <= 0) {
+    hideSpinner();
+    cerrarModalPago();
+    return;
+  }
 
-    const now = new Date();
-    const horaI = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-    const fechaI = now.toISOString().split("T")[0];
+  const now = new Date();
+  const horaI = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+  const fechaI = now.toISOString().split("T")[0];
 
-    let folioBase = null;
-    let ficticiaLote = false;
-    try {
-      const resLote = await fetch("https://backend-banios.dev-wit.com/api/boletas/enviar-lote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: tipo,
-          precio: Number(precioFinal) || 0,
-          cantidad: Number(cantidad),
-          monto_total: (Number(precioFinal) || 0) * Number(cantidad)
-        })
-      });
-      const loteData = await resLote.json();
-      console.log("🔍 Respuesta enviar-lote:", loteData);
+  // ✅ Obtener id_aperturas_cierres desde localStorage
+  const id_aperturas_cierres = localStorage.getItem('id_aperturas_cierres');
 
-      if (!resLote.ok || !loteData?.folio) {
-        throw new Error(loteData?.error || "No se recibió folio base del lote");
-      }
-      folioBase = loteData.folio.toString();
-      ficticiaLote = loteData.ficticia === true;
-    } catch (e) {
-      console.error("❌ Error al solicitar enviar-lote:", e);
-      Swal.fire({
-        icon: "error",
-        title: "Error al emitir boletas",
-        text: e.message || "No fue posible obtener folios del SII.",
-        customClass: { popup: "alert-card", title: "swal-font", confirmButton: "my-confirm-btn" },
-        buttonsStyling: false
-      });
-      hideSpinner();
-      cerrarModalPago();
-      return;
-    }
-
-    await fetch("http://localhost:3000/api/caja/movimientos", {
+  let folioBase = null;
+  let ficticiaLote = false;
+  try {
+    const resLote = await fetch("https://backend-banios.dev-wit.com/api/boletas/enviar-lote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        codigo: `LOTE-${Date.now()}`,
-        fecha: fechaI,
-        hora: horaI,
-        tipo,
-        valor: (Number(precioFinal) || 0) * Number(cantidad),
-        metodoPago: "EFECTIVO",
-        estado_caja,
-        id_usuario,
-        id_caja
-      }),
+        nombre: tipo,
+        precio: Number(precioFinal) || 0,
+        cantidad: Number(cantidad),
+        monto_total: (Number(precioFinal) || 0) * Number(cantidad)
+      })
+    });
+    const loteData = await resLote.json();
+    console.log("🔍 Respuesta enviar-lote:", loteData);
+
+    if (!resLote.ok || !loteData?.folio) {
+      throw new Error(loteData?.error || "No se recibió folio base del lote");
+    }
+    folioBase = loteData.folio.toString();
+    ficticiaLote = loteData.ficticia === true;
+  } catch (e) {
+    console.error("❌ Error al solicitar enviar-lote:", e);
+    Swal.fire({
+      icon: "error",
+      title: "Error al emitir boletas",
+      text: e.message || "No fue posible obtener folios del SII.",
+      customClass: { popup: "alert-card", title: "swal-font", confirmButton: "my-confirm-btn" },
+      buttonsStyling: false
+    });
+    hideSpinner();
+    cerrarModalPago();
+    return;
+  }
+
+  await fetch("http://localhost:3000/api/caja/movimientos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      codigo: `LOTE-${Date.now()}`,
+      fecha: fechaI,
+      hora: horaI,
+      tipo,
+      valor: (Number(precioFinal) || 0) * Number(cantidad),
+      metodoPago: "EFECTIVO",
+      estado_caja,
+      id_usuario,
+      id_caja: id_aperturas_cierres // ✅ Enviar id_aperturas_cierres como id_caja
+    }),
+  });
+
+  const computeFolioCorrelativo = (base, offset) => {
+    if (typeof base === "string" && base.includes("-")) {
+      const parts = base.split("-");
+      const sufijo = parts.pop();
+      const prefijo = parts.join("-");
+      const n = parseInt(sufijo);
+      const next = isNaN(n) ? offset + 1 : n + offset;
+      return `${prefijo}-${next}`;
+    } else if (!isNaN(Number(base))) {
+      return (Number(base) + offset).toString();
+    }
+    return `${base}-${offset + 1}`;
+  };
+
+  for (let i = 0; i < Number(cantidad); i++) {
+    const codigoI = generarTokenNumerico();
+    QR.makeCode(codigoI);
+    await new Promise(resolve => setTimeout(resolve, 400));
+    const qrCanvasI = contenedorQR.querySelector("canvas");
+    const qrBase64I = qrCanvasI ? qrCanvasI.toDataURL("image/png").replace(/^data:image\/png;base64,/, "") : "";
+
+    // ✅ CORRECCIÓN: Enviar id_aperturas_cierres como id_caja al save.php
+    await callApi({ 
+      Codigo: codigoI, 
+      hora: horaI, 
+      fecha: fechaI, 
+      tipo, 
+      valor: precioFinal, 
+      id_caja: id_aperturas_cierres, // ✅ Esto es lo que save.php espera
+      medio_pago: metodoPago 
     });
 
-    const computeFolioCorrelativo = (base, offset) => {
-      if (typeof base === "string" && base.includes("-")) {
-        const parts = base.split("-");
-        const sufijo = parts.pop();
-        const prefijo = parts.join("-");
-        const n = parseInt(sufijo);
-        const next = isNaN(n) ? offset + 1 : n + offset;
-        return `${prefijo}-${next}`;
-      } else if (!isNaN(Number(base))) {
-        return (Number(base) + offset).toString();
-      }
-      return `${base}-${offset + 1}`;
-    };
+    const folioActual = computeFolioCorrelativo(folioBase, i);
 
-    const id_caja = localStorage.getItem('id_aperturas_cierres');
+    await imprimirTicket({
+      Codigo: codigoI,
+      hora: horaI,
+      fecha: fechaI,
+      tipo,
+      valor: precioFinal,
+      qrBase64: qrBase64I,
+      folio: folioActual,
+      cantidad: 1
+    });
 
-    for (let i = 0; i < Number(cantidad); i++) {
-      const codigoI = generarTokenNumerico();
-      QR.makeCode(codigoI);
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const qrCanvasI = contenedorQR.querySelector("canvas");
-      const qrBase64I = qrCanvasI ? qrCanvasI.toDataURL("image/png").replace(/^data:image\/png;base64,/, "") : "";
-
-      // ✅ Se envía correctamente el id_caja al backend
-      await callApi({ Codigo: codigoI, hora: horaI, fecha: fechaI, tipo, valor: precioFinal, id_caja, medio_pago: metodoPago });
-
-
-      const folioActual = computeFolioCorrelativo(folioBase, i);
-
-      await imprimirTicket({
-        Codigo: codigoI,
-        hora: horaI,
-        fecha: fechaI,
-        tipo,
-        valor: precioFinal,
-        id_caja, // opcional: si imprimirTicket también lo usa
-        qrBase64: qrBase64I,
-        folio: folioActual,
-        cantidad: 1
-      });
-
-      if (i + 1 < Number(cantidad) && typeof pausaParaCorte === "function") {
-        await pausaParaCorte(i + 1, Number(cantidad));
-      }
-
-      try {
-        addUser(codigoI);
-        setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
-      } catch (e) {
-        console.warn("ZKTeco: no se pudo registrar acceso para", codigoI, e);
-      }
+    if (i + 1 < Number(cantidad) && typeof pausaParaCorte === "function") {
+      await pausaParaCorte(i + 1, Number(cantidad));
     }
 
-    if (typeof confirmarImpresionExitosa === "function") {
-      await confirmarImpresionExitosa(Number(cantidad));
+    try {
+      addUser(codigoI);
+      setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
+    } catch (e) {
+      console.warn("ZKTeco: no se pudo registrar acceso para", codigoI, e);
     }
   }
+
+  if (typeof confirmarImpresionExitosa === "function") {
+    await confirmarImpresionExitosa(Number(cantidad));
+  }
+}
 
   if (botonActivo) {
     botonActivo.disabled = false;

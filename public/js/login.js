@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function cerrarSesion() {
   try {
     sessionStorage.clear();
-    localStorage.clear();
+    // localStorage.clear();
     window.location.href = '/login.html';
   } catch (err) {
     console.error('Error al cerrar sesión:', err);

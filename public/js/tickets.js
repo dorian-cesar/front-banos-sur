@@ -177,10 +177,18 @@ async function imprimirTicket({ Codigo, hora, fecha, tipo, valor, qrBase64, foli
 
         const response = await fetch(endpoint, {
           method: "POST",
-          headers: {
+      /*    headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`, // ✅ Se incluye token
           },
+      */
+          headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+
+
+
           body: JSON.stringify(bodyData),
         });
 
@@ -320,6 +328,10 @@ async function imprimirTicket({ Codigo, hora, fecha, tipo, valor, qrBase64, foli
       const responsePrint = await fetch("http://localhost:3000/api/imprimir", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+
+
+
+
         body: JSON.stringify({
           pdfData: pdfBase64,
           printer: "POS58",

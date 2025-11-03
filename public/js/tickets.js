@@ -438,6 +438,8 @@ function cerrarModalPago() {
 async function continuarConPago(metodoPago) {
   if (!datosPendientes) return;
 
+  console.log(`🟢 INICIANDO PAGO - Método: ${metodoPago}`, datosPendientes);
+
   const { Codigo, tipo } = datosPendientes;
   const estado_caja = localStorage.getItem('estado_caja');
   const precioFinal = getPrecio(tipo);
@@ -459,6 +461,7 @@ async function continuarConPago(metodoPago) {
 
     try {
       showSpinner();
+      console.log(`💳 INICIANDO PAGO CON TARJETA - Monto: $${monto}`);
 
       const res = await fetch("http://localhost:3000/api/payment", {
         method: "POST",
@@ -487,7 +490,8 @@ async function continuarConPago(metodoPago) {
       });
 
       // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
-      const { fecha, hora } = await obtenerFechaHoraChile(); // ← AGREGAR AWAIT
+      const { fecha, hora } = await obtenerFechaHoraChile();
+      console.log(`📅 Fecha/hora Chile obtenida: ${fecha} ${hora}`);
 
       // Generar QR y registrar movimiento local
       QR.makeCode(Codigo);
@@ -495,8 +499,10 @@ async function continuarConPago(metodoPago) {
       const qrCanvas = contenedorQR.querySelector("canvas");
       const qrBase64 = qrCanvas ? qrCanvas.toDataURL("image/png").replace(/^data:image\/png;base64,/, "") : "";
 
+      console.log(`📤 Enviando a callApi - Código: ${Codigo}`);
       await callApi({ Codigo, hora, fecha, tipo, valor: precioFinal });
 
+      console.log(`📊 Registrando movimiento en caja - Código: ${Codigo}`);
       await fetch('http://localhost:3000/api/caja/movimientos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -518,14 +524,18 @@ async function continuarConPago(metodoPago) {
         })
       });
 
+      console.log(`🖨️ Iniciando impresión de ticket - Código: ${Codigo}`);
       await imprimirTicket({ Codigo, hora, fecha, tipo, valor: precioFinal, qrBase64 });
 
       try {
+        console.log(`👤 Registrando en ZKTeco - Código: ${Codigo}`);
         addUser(Codigo);
         setTimeout(() => addUserAccessLevel(Codigo.substring(0, 6)), 1000);
       } catch (e) {
         console.warn("ZKTeco: no se pudo registrar acceso para", Codigo, e);
       }
+
+      console.log(`✅ PAGO TARJETA COMPLETADO - Código: ${Codigo}`);
 
     } catch (err) {
       console.error("❌ Error durante el pago:", err);
@@ -549,7 +559,7 @@ async function continuarConPago(metodoPago) {
 
   // 🔹 Mostrar datos en interfaz
   // ✅ OBTENER FECHA/HORA ACTUAL para mostrar en interfaz - CON AWAIT
-  const { fecha: fechaDisplay, hora: horaDisplay } = await obtenerFechaHoraChile(); // ← AGREGAR AWAIT
+  const { fecha: fechaDisplay, hora: horaDisplay } = await obtenerFechaHoraChile();
   parrafoFecha.textContent = fechaDisplay;
   parrafoHora.textContent = horaDisplay;
   parrafoTipo.textContent = `${tipo} (${metodoPago})`;
@@ -560,16 +570,20 @@ async function continuarConPago(metodoPago) {
   // 🔹 Pago EFECTIVO
   if (metodoPago === "EFECTIVO") {
     // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
-    const { fecha: fechaI, hora: horaI } = await obtenerFechaHoraChile(); // ← AGREGAR AWAIT
+    const { fecha: fechaI, hora: horaI } = await obtenerFechaHoraChile();
     const codigoI = generarTokenNumerico();
+
+    console.log(`💰 INICIANDO PAGO EFECTIVO - Nuevo código: ${codigoI}`);
 
     QR.makeCode(codigoI);
     await new Promise(resolve => setTimeout(resolve, 500));
     const qrCanvas = contenedorQR.querySelector("canvas");
     const qrBase64 = qrCanvas ? qrCanvas.toDataURL("image/png").replace(/^data:image\/png;base64,/,"") : "";
 
+    console.log(`📤 Enviando a callApi - Código: ${codigoI}`);
     await callApi({ Codigo: codigoI, hora: horaI, fecha: fechaI, tipo, valor: precioFinal, medio_pago: metodoPago });
 
+    console.log(`📊 Registrando movimiento en caja - Código: ${codigoI}`);
     await fetch('http://localhost:3000/api/caja/movimientos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -586,31 +600,43 @@ async function continuarConPago(metodoPago) {
       })
     });
 
+    console.log(`🖨️ Iniciando impresión de ticket - Código: ${codigoI}`);
     await imprimirTicket({ Codigo: codigoI, hora: horaI, fecha: fechaI, tipo, valor: precioFinal, qrBase64 });
 
     try {
+      console.log(`👤 Registrando en ZKTeco - Código: ${codigoI}`);
       addUser(codigoI);
       setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
     } catch (e) {
       console.warn("ZKTeco: no se pudo registrar acceso para", codigoI, e);
     }
 
+    console.log(`✅ PAGO EFECTIVO COMPLETADO - Código: ${codigoI}`);
+
   // 🔹 Pago EFECTIVO_LOTE
   } else if (metodoPago === "EFECTIVO_LOTE") {
+    console.log(`📦 INICIANDO PAGO EFECTIVO LOTE`);
     const cantidad = await seleccionarCantidadTicketsAccesible();
+    
     if (!cantidad || cantidad <= 0) {
+      console.log(`❌ LOTE CANCELADO - Cantidad: ${cantidad}`);
       hideSpinner();
       cerrarModalPago();
       return;
     }
 
+    console.log(`🎯 LOTE CONFIRMADO - Cantidad: ${cantidad} tickets`);
+
     // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
-    const { fecha: fechaI, hora: horaI } = await obtenerFechaHoraChile(); // ← AGREGAR AWAIT
+    const { fecha: fechaI, hora: horaI } = await obtenerFechaHoraChile();
+    console.log(`📅 Fecha/hora Chile para lote: ${fecha} ${hora}`);
 
     const id_aperturas_cierres = localStorage.getItem('id_aperturas_cierres');
 
     let folioBase = null;
     let ficticiaLote = false;
+    
+    console.log(`📡 Solicitando folio base para lote de ${cantidad} tickets`);
     try {
       const resLote = await fetch("https://backend-banios.dev-wit.com/api/boletas/enviar-lote", {
         method: "POST",
@@ -630,6 +656,8 @@ async function continuarConPago(metodoPago) {
       }
       folioBase = loteData.folio.toString();
       ficticiaLote = loteData.ficticia === true;
+      
+      console.log(`✅ Folio base obtenido: ${folioBase} | Ficticia: ${ficticiaLote}`);
     } catch (e) {
       console.error("❌ Error al solicitar enviar-lote:", e);
       Swal.fire({
@@ -644,6 +672,7 @@ async function continuarConPago(metodoPago) {
       return;
     }
 
+    console.log(`📊 Registrando movimiento de lote en caja`);
     await fetch("http://localhost:3000/api/caja/movimientos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -660,67 +689,124 @@ async function continuarConPago(metodoPago) {
       }),
     });
 
+    // ✅ FUNCIÓN CORREGIDA PARA CÁLCULO DE FOLIOS
     const computeFolioCorrelativo = (base, offset) => {
+      console.log(`🔢 Calculando folio - Base: ${base}, Offset: ${offset}`);
+      
+      // Si el folio base ya tiene formato con guion (ej: "412-2729")
       if (typeof base === "string" && base.includes("-")) {
-        const parts = base.split("-");
-        const sufijo = parts.pop();
-        const prefijo = parts.join("-");
+        const lastIndex = base.lastIndexOf("-");
+        const prefijo = base.substring(0, lastIndex + 1); // Incluye el guion
+        const sufijo = base.substring(lastIndex + 1);
         const n = parseInt(sufijo);
-        const next = isNaN(n) ? offset + 1 : n + offset;
-        return `${prefijo}-${next}`;
-      } else if (!isNaN(Number(base))) {
-        return (Number(base) + offset).toString();
+        
+        console.log(`📝 Parseando folio con guion - Prefijo: "${prefijo}", Sufijo: "${sufijo}", N: ${n}`);
+        
+        if (!isNaN(n)) {
+          const resultado = `${prefijo}${n + offset}`;
+          console.log(`✅ Folio calculado: ${resultado}`);
+          return resultado;
+        }
+      } 
+      // Si es puramente numérico
+      else if (!isNaN(Number(base))) {
+        const resultado = (Number(base) + offset).toString();
+        console.log(`✅ Folio numérico calculado: ${resultado}`);
+        return resultado;
       }
-      return `${base}-${offset + 1}`;
+      
+      // Fallback para formato no reconocido
+      const resultado = `${base}-${offset + 1}`;
+      console.log(`⚠️ Folio fallback: ${resultado}`);
+      return resultado;
     };
 
+    console.log(`🔄 INICIANDO IMPRESIÓN DE LOTE: ${cantidad} tickets`);
+    console.log(`📋 Folio base: ${folioBase}, Tipo: ${tipo}, Precio: $${precioFinal}`);
+
+    let ticketsImpresos = 0;
+    let ticketsConError = 0;
+
     for (let i = 0; i < Number(cantidad); i++) {
-      const codigoI = generarTokenNumerico();
-      QR.makeCode(codigoI);
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const qrCanvasI = contenedorQR.querySelector("canvas");
-      const qrBase64I = qrCanvasI ? qrCanvasI.toDataURL("image/png").replace(/^data:image\/png;base64,/, "") : "";
-
-      await callApi({ 
-        Codigo: codigoI, 
-        hora: horaI, 
-        fecha: fechaI, 
-        tipo, 
-        valor: precioFinal, 
-        id_caja: id_aperturas_cierres,
-        medio_pago: metodoPago 
-      });
-
-      const folioActual = computeFolioCorrelativo(folioBase, i);
-
-      await imprimirTicket({
-        Codigo: codigoI,
-        hora: horaI,
-        fecha: fechaI,
-        tipo,
-        valor: precioFinal,
-        qrBase64: qrBase64I,
-        folio: folioActual,
-        cantidad: 1
-      });
-
-      if (i + 1 < Number(cantidad) && typeof pausaParaCorte === "function") {
-        await pausaParaCorte(i + 1, Number(cantidad));
-      }
-
       try {
-        addUser(codigoI);
-        setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
-      } catch (e) {
-        console.warn("ZKTeco: no se pudo registrar acceso para", codigoI, e);
+        const codigoI = generarTokenNumerico();
+        const folioActual = computeFolioCorrelativo(folioBase, i);
+        
+        console.log(`\n🎫 TICKET ${i + 1}/${cantidad}:`, {
+          folio: folioActual,
+          codigo: codigoI,
+          iteracion: i
+        });
+
+        // Generar QR
+        QR.makeCode(codigoI);
+        await new Promise(resolve => setTimeout(resolve, 400));
+        const qrCanvasI = contenedorQR.querySelector("canvas");
+        const qrBase64I = qrCanvasI ? qrCanvasI.toDataURL("image/png").replace(/^data:image\/png;base64,/, "") : "";
+
+        // Registrar en API
+        console.log(`📤 Enviando a callApi - Ticket ${i + 1}`);
+        await callApi({ 
+          Codigo: codigoI, 
+          hora: horaI, 
+          fecha: fechaI, 
+          tipo, 
+          valor: precioFinal, 
+          id_caja: id_aperturas_cierres,
+          medio_pago: metodoPago 
+        });
+
+        // Imprimir ticket
+        console.log(`🖨️ Imprimiendo ticket ${i + 1}`);
+        await imprimirTicket({
+          Codigo: codigoI,
+          hora: horaI,
+          fecha: fechaI,
+          tipo,
+          valor: precioFinal,
+          qrBase64: qrBase64I,
+          folio: folioActual,
+          cantidad: 1
+        });
+
+        ticketsImpresos++;
+
+        // Registrar en ZKTeco
+        try {
+          console.log(`👤 Registrando en ZKTeco - Ticket ${i + 1}`);
+          addUser(codigoI);
+          setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
+        } catch (e) {
+          console.warn(`⚠️ ZKTeco error en ticket ${i + 1}:`, e);
+        }
+
+        // Pausa para corte (excepto último ticket)
+        if (i + 1 < Number(cantidad) && typeof pausaParaCorte === "function") {
+          console.log(`⏸️ Pausa para corte - Ticket ${i + 1}/${cantidad}`);
+          await pausaParaCorte(i + 1, Number(cantidad));
+        }
+
+        console.log(`✅ TICKET ${i + 1} COMPLETADO`);
+
+      } catch (error) {
+        ticketsConError++;
+        console.error(`❌ ERROR en ticket ${i + 1}:`, error.message);
+        // Continuar con el siguiente ticket en lugar de detener todo el lote
       }
     }
 
+    console.log(`\n📊 RESUMEN LOTE COMPLETADO:`);
+    console.log(`✅ Tickets impresos exitosamente: ${ticketsImpresos}`);
+    console.log(`❌ Tickets con error: ${ticketsConError}`);
+    console.log(`🎯 Total solicitado: ${cantidad}`);
+    console.log(`📈 Eficiencia: ${((ticketsImpresos / cantidad) * 100).toFixed(1)}%`);
+
     if (typeof confirmarImpresionExitosa === "function") {
-      await confirmarImpresionExitosa(Number(cantidad));
+      await confirmarImpresionExitosa(ticketsImpresos);
     }
   }
 
+  // Limpieza final
   if (botonActivo) {
     botonActivo.disabled = false;
     botonActivo.classList.remove("disabled");
@@ -730,18 +816,21 @@ async function continuarConPago(metodoPago) {
   document.getElementById("modalPago").style.display = "none";
   datosPendientes = null;
   hideSpinner();
-  function parseJwt(token) {
-    try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
-        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-      ).join(''));
-      return JSON.parse(jsonPayload);
-    } catch (err) {
-      console.error('Token inválido:', err);
-      return null;
-    }
+  
+  console.log(`🏁 PROCESO DE PAGO FINALIZADO - Método: ${metodoPago}`);
+}
+
+function parseJwt(token) {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(''));
+    return JSON.parse(jsonPayload);
+  } catch (err) {
+    console.error('Token inválido:', err);
+    return null;
   }
 }
 

@@ -27,6 +27,67 @@ const api = Number(serviciosDisponibles?.[tipo]?.precio);
   return Number.isFinite(api) && api > 0 ? api : (PRECIO_FALLBACK[tipo] ?? 0);
 };
 
+async function obtenerFechaHoraChile() {
+  try {
+    // Intentar obtener la hora real desde un servidor confiable
+    const response = await fetch('https://worldtimeapi.org/api/timezone/America/Santiago', {
+      method: 'GET',
+      cache: 'no-cache'
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      const fechaHoraServidor = new Date(data.datetime);
+      
+      const anio = fechaHoraServidor.getFullYear();
+      const mes = String(fechaHoraServidor.getMonth() + 1).padStart(2, "0");
+      const dia = String(fechaHoraServidor.getDate()).padStart(2, "0");
+      const hora = String(fechaHoraServidor.getHours()).padStart(2, "0");
+      const minuto = String(fechaHoraServidor.getMinutes()).padStart(2, "0");
+      const segundo = String(fechaHoraServidor.getSeconds()).padStart(2, "0");
+
+      console.log(`✅ Hora REAL de Chile desde servidor: ${hora}:${minuto}:${segundo}`);
+      
+      return {
+        fecha: `${anio}-${mes}-${dia}`,
+        hora: `${hora}:${minuto}:${segundo}`
+      };
+    }
+  } catch (error) {
+    console.warn('No se pudo obtener hora del servidor, usando fallback:', error);
+  }
+  
+  // Fallback: método local mejorado
+  return obtenerFechaHoraChileFallback();
+}
+
+function obtenerFechaHoraChileFallback() {
+  const ahora = new Date();
+  
+  // Chile está actualmente en UTC-3 (horario de verano)
+  // Este offset lo debes actualizar manualmente cuando cambie el horario
+  const OFFSET_CHILE = -3; // ← ⚠️ CAMBIAR A -4 cuando termine el horario de verano
+  
+  // Calcular hora Chile manualmente
+  const horaUTC = ahora.getTime() + (ahora.getTimezoneOffset() * 60000);
+  const horaChile = new Date(horaUTC + (3600000 * OFFSET_CHILE));
+  
+  const anio = horaChile.getFullYear();
+  const mes = String(horaChile.getMonth() + 1).padStart(2, "0");
+  const dia = String(horaChile.getDate()).padStart(2, "0");
+  const hora = String(horaChile.getHours()).padStart(2, "0");
+  const minuto = String(horaChile.getMinutes()).padStart(2, "0");
+  const segundo = String(horaChile.getSeconds()).padStart(2, "0");
+
+  console.log(`⚠️ Hora FALLBACK Chile: ${hora}:${minuto}:${segundo} (offset manual: ${OFFSET_CHILE})`);
+  console.log(`🖥️ Hora PC: ${ahora.getHours()}:${ahora.getMinutes()}`);
+  
+  return {
+    fecha: `${anio}-${mes}-${dia}`,
+    hora: `${hora}:${minuto}:${segundo}`
+  };
+}
+
 async function cargarServicios() {
   try {
     const token = sessionStorage.getItem('authToken');
@@ -377,7 +438,7 @@ function cerrarModalPago() {
 async function continuarConPago(metodoPago) {
   if (!datosPendientes) return;
 
-  const { Codigo, hora, fecha, tipo } = datosPendientes;
+  const { Codigo, tipo } = datosPendientes;
   const estado_caja = localStorage.getItem('estado_caja');
   const precioFinal = getPrecio(tipo);
   const id_caja = localStorage.getItem('id_aperturas_cierres');
@@ -392,7 +453,7 @@ async function continuarConPago(metodoPago) {
   }
   const id_usuario = jwtPayload.id;
 
-  // 🔹 Validación y pago con tarjeta (POS)
+  // 🔹 Pago con TARJETA
   if (metodoPago === "TARJETA") {
     const monto = Math.round(Number(precioFinal) || 0);
 
@@ -412,7 +473,6 @@ async function continuarConPago(metodoPago) {
 
       const data = result.data;
 
-      // Validar aprobación del POS
       if (data.responseCode !== 0) {
         throw new Error(`Transacción fallida: ${data.responseMessage || "No aprobado por el POS"}`);
       }
@@ -425,6 +485,9 @@ async function continuarConPago(metodoPago) {
         cardType: data.cardType,
         cardBrand: data.cardBrand
       });
+
+      // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
+      const { fecha, hora } = await obtenerFechaHoraChile(); // ← AGREGAR AWAIT
 
       // Generar QR y registrar movimiento local
       QR.makeCode(Codigo);
@@ -485,18 +548,19 @@ async function continuarConPago(metodoPago) {
   }
 
   // 🔹 Mostrar datos en interfaz
-  parrafoFecha.textContent = fecha;
-  parrafoHora.textContent = hora;
+  // ✅ OBTENER FECHA/HORA ACTUAL para mostrar en interfaz - CON AWAIT
+  const { fecha: fechaDisplay, hora: horaDisplay } = await obtenerFechaHoraChile(); // ← AGREGAR AWAIT
+  parrafoFecha.textContent = fechaDisplay;
+  parrafoHora.textContent = horaDisplay;
   parrafoTipo.textContent = `${tipo} (${metodoPago})`;
   parrafoCodigo.textContent = Codigo;
 
   showSpinner();
 
-  // 🔹 Flujo según método de pago
+  // 🔹 Pago EFECTIVO
   if (metodoPago === "EFECTIVO") {
-    const now = new Date();
-    const horaI = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
-    const fechaI = now.toISOString().split("T")[0];
+    // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
+    const { fecha: fechaI, hora: horaI } = await obtenerFechaHoraChile(); // ← AGREGAR AWAIT
     const codigoI = generarTokenNumerico();
 
     QR.makeCode(codigoI);
@@ -504,7 +568,7 @@ async function continuarConPago(metodoPago) {
     const qrCanvas = contenedorQR.querySelector("canvas");
     const qrBase64 = qrCanvas ? qrCanvas.toDataURL("image/png").replace(/^data:image\/png;base64,/,"") : "";
 
-    await callApi({ Codigo, hora, fecha, tipo, valor: precioFinal, medio_pago: metodoPago });
+    await callApi({ Codigo: codigoI, hora: horaI, fecha: fechaI, tipo, valor: precioFinal, medio_pago: metodoPago });
 
     await fetch('http://localhost:3000/api/caja/movimientos', {
       method: 'POST',
@@ -531,133 +595,131 @@ async function continuarConPago(metodoPago) {
       console.warn("ZKTeco: no se pudo registrar acceso para", codigoI, e);
     }
 
+  // 🔹 Pago EFECTIVO_LOTE
   } else if (metodoPago === "EFECTIVO_LOTE") {
-  const cantidad = await seleccionarCantidadTicketsAccesible();
-  if (!cantidad || cantidad <= 0) {
-    hideSpinner();
-    cerrarModalPago();
-    return;
-  }
+    const cantidad = await seleccionarCantidadTicketsAccesible();
+    if (!cantidad || cantidad <= 0) {
+      hideSpinner();
+      cerrarModalPago();
+      return;
+    }
 
-  const now = new Date();
-  const horaI = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-  const fechaI = now.toISOString().split("T")[0];
+    // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
+    const { fecha: fechaI, hora: horaI } = await obtenerFechaHoraChile(); // ← AGREGAR AWAIT
 
-  // ✅ Obtener id_aperturas_cierres desde localStorage
-  const id_aperturas_cierres = localStorage.getItem('id_aperturas_cierres');
+    const id_aperturas_cierres = localStorage.getItem('id_aperturas_cierres');
 
-  let folioBase = null;
-  let ficticiaLote = false;
-  try {
-    const resLote = await fetch("https://backend-banios.dev-wit.com/api/boletas/enviar-lote", {
+    let folioBase = null;
+    let ficticiaLote = false;
+    try {
+      const resLote = await fetch("https://backend-banios.dev-wit.com/api/boletas/enviar-lote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: tipo,
+          precio: Number(precioFinal) || 0,
+          cantidad: Number(cantidad),
+          monto_total: (Number(precioFinal) || 0) * Number(cantidad)
+        })
+      });
+      const loteData = await resLote.json();
+      console.log("🔍 Respuesta enviar-lote:", loteData);
+
+      if (!resLote.ok || !loteData?.folio) {
+        throw new Error(loteData?.error || "No se recibió folio base del lote");
+      }
+      folioBase = loteData.folio.toString();
+      ficticiaLote = loteData.ficticia === true;
+    } catch (e) {
+      console.error("❌ Error al solicitar enviar-lote:", e);
+      Swal.fire({
+        icon: "error",
+        title: "Error al emitir boletas",
+        text: e.message || "No fue posible obtener folios del SII.",
+        customClass: { popup: "alert-card", title: "swal-font", confirmButton: "my-confirm-btn" },
+        buttonsStyling: false
+      });
+      hideSpinner();
+      cerrarModalPago();
+      return;
+    }
+
+    await fetch("http://localhost:3000/api/caja/movimientos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        nombre: tipo,
-        precio: Number(precioFinal) || 0,
-        cantidad: Number(cantidad),
-        monto_total: (Number(precioFinal) || 0) * Number(cantidad)
-      })
-    });
-    const loteData = await resLote.json();
-    console.log("🔍 Respuesta enviar-lote:", loteData);
-
-    if (!resLote.ok || !loteData?.folio) {
-      throw new Error(loteData?.error || "No se recibió folio base del lote");
-    }
-    folioBase = loteData.folio.toString();
-    ficticiaLote = loteData.ficticia === true;
-  } catch (e) {
-    console.error("❌ Error al solicitar enviar-lote:", e);
-    Swal.fire({
-      icon: "error",
-      title: "Error al emitir boletas",
-      text: e.message || "No fue posible obtener folios del SII.",
-      customClass: { popup: "alert-card", title: "swal-font", confirmButton: "my-confirm-btn" },
-      buttonsStyling: false
-    });
-    hideSpinner();
-    cerrarModalPago();
-    return;
-  }
-
-  await fetch("http://localhost:3000/api/caja/movimientos", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      codigo: `LOTE-${Date.now()}`,
-      fecha: fechaI,
-      hora: horaI,
-      tipo,
-      valor: (Number(precioFinal) || 0) * Number(cantidad),
-      metodoPago: "EFECTIVO",
-      estado_caja,
-      id_usuario,
-      id_caja: id_aperturas_cierres // ✅ Enviar id_aperturas_cierres como id_caja
-    }),
-  });
-
-  const computeFolioCorrelativo = (base, offset) => {
-    if (typeof base === "string" && base.includes("-")) {
-      const parts = base.split("-");
-      const sufijo = parts.pop();
-      const prefijo = parts.join("-");
-      const n = parseInt(sufijo);
-      const next = isNaN(n) ? offset + 1 : n + offset;
-      return `${prefijo}-${next}`;
-    } else if (!isNaN(Number(base))) {
-      return (Number(base) + offset).toString();
-    }
-    return `${base}-${offset + 1}`;
-  };
-
-  for (let i = 0; i < Number(cantidad); i++) {
-    const codigoI = generarTokenNumerico();
-    QR.makeCode(codigoI);
-    await new Promise(resolve => setTimeout(resolve, 400));
-    const qrCanvasI = contenedorQR.querySelector("canvas");
-    const qrBase64I = qrCanvasI ? qrCanvasI.toDataURL("image/png").replace(/^data:image\/png;base64,/, "") : "";
-
-    // ✅ CORRECCIÓN: Enviar id_aperturas_cierres como id_caja al save.php
-    await callApi({ 
-      Codigo: codigoI, 
-      hora: horaI, 
-      fecha: fechaI, 
-      tipo, 
-      valor: precioFinal, 
-      id_caja: id_aperturas_cierres, // ✅ Esto es lo que save.php espera
-      medio_pago: metodoPago 
+        codigo: `LOTE-${Date.now()}`,
+        fecha: fechaI,
+        hora: horaI,
+        tipo,
+        valor: (Number(precioFinal) || 0) * Number(cantidad),
+        metodoPago: "EFECTIVO",
+        estado_caja,
+        id_usuario,
+        id_caja: id_aperturas_cierres
+      }),
     });
 
-    const folioActual = computeFolioCorrelativo(folioBase, i);
+    const computeFolioCorrelativo = (base, offset) => {
+      if (typeof base === "string" && base.includes("-")) {
+        const parts = base.split("-");
+        const sufijo = parts.pop();
+        const prefijo = parts.join("-");
+        const n = parseInt(sufijo);
+        const next = isNaN(n) ? offset + 1 : n + offset;
+        return `${prefijo}-${next}`;
+      } else if (!isNaN(Number(base))) {
+        return (Number(base) + offset).toString();
+      }
+      return `${base}-${offset + 1}`;
+    };
 
-    await imprimirTicket({
-      Codigo: codigoI,
-      hora: horaI,
-      fecha: fechaI,
-      tipo,
-      valor: precioFinal,
-      qrBase64: qrBase64I,
-      folio: folioActual,
-      cantidad: 1
-    });
+    for (let i = 0; i < Number(cantidad); i++) {
+      const codigoI = generarTokenNumerico();
+      QR.makeCode(codigoI);
+      await new Promise(resolve => setTimeout(resolve, 400));
+      const qrCanvasI = contenedorQR.querySelector("canvas");
+      const qrBase64I = qrCanvasI ? qrCanvasI.toDataURL("image/png").replace(/^data:image\/png;base64,/, "") : "";
 
-    if (i + 1 < Number(cantidad) && typeof pausaParaCorte === "function") {
-      await pausaParaCorte(i + 1, Number(cantidad));
+      await callApi({ 
+        Codigo: codigoI, 
+        hora: horaI, 
+        fecha: fechaI, 
+        tipo, 
+        valor: precioFinal, 
+        id_caja: id_aperturas_cierres,
+        medio_pago: metodoPago 
+      });
+
+      const folioActual = computeFolioCorrelativo(folioBase, i);
+
+      await imprimirTicket({
+        Codigo: codigoI,
+        hora: horaI,
+        fecha: fechaI,
+        tipo,
+        valor: precioFinal,
+        qrBase64: qrBase64I,
+        folio: folioActual,
+        cantidad: 1
+      });
+
+      if (i + 1 < Number(cantidad) && typeof pausaParaCorte === "function") {
+        await pausaParaCorte(i + 1, Number(cantidad));
+      }
+
+      try {
+        addUser(codigoI);
+        setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
+      } catch (e) {
+        console.warn("ZKTeco: no se pudo registrar acceso para", codigoI, e);
+      }
     }
 
-    try {
-      addUser(codigoI);
-      setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
-    } catch (e) {
-      console.warn("ZKTeco: no se pudo registrar acceso para", codigoI, e);
+    if (typeof confirmarImpresionExitosa === "function") {
+      await confirmarImpresionExitosa(Number(cantidad));
     }
   }
-
-  if (typeof confirmarImpresionExitosa === "function") {
-    await confirmarImpresionExitosa(Number(cantidad));
-  }
-}
 
   if (botonActivo) {
     botonActivo.disabled = false;
@@ -668,7 +730,6 @@ async function continuarConPago(metodoPago) {
   document.getElementById("modalPago").style.display = "none";
   datosPendientes = null;
   hideSpinner();
-
   function parseJwt(token) {
     try {
       const base64Url = token.split('.')[1];

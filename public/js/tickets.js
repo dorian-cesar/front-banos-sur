@@ -258,17 +258,6 @@ async function imprimirTicket({
     for (let i = 0; i < cantidadBoletas; i++) {
       function computeFolioCorrelativo(base, offset) {
         const baseStr = String(base).trim();
-        const partes = baseStr.split("-");
-        const ultimo = partes[partes.length - 1];
-        if (!isNaN(ultimo) && partes.length > 2 && Number(ultimo) < 1000) {
-          const numeroBase = Number(ultimo);
-          partes[partes.length - 1] = (numeroBase + offset).toString();
-          return partes.join("-");
-        }
-        if (!isNaN(ultimo) && partes.length === 2 && Number(ultimo) >= 1000) {
-          if (offset === 0) return baseStr; // el primero conserva el folio base
-          return `${baseStr}-${offset}`; // siguiente boletas: -1, -2, etc.
-        }
         return `${baseStr}-${offset + 1}`;
       }
 

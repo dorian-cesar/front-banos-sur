@@ -786,7 +786,7 @@ async function continuarConPago(metodoPago) {
         // const folioActual = computeFolioCorrelativo(folioBase, i);
 
         console.log(`\n🎫 TICKET ${i + 1}/${cantidad}:`, {
-          folio: folioActual,
+          folio: folioBase,
           codigo: codigoI,
           iteracion: i,
         });
@@ -822,7 +822,7 @@ async function continuarConPago(metodoPago) {
           tipo,
           valor: precioFinal,
           qrBase64: qrBase64I,
-          folio: folioActual,
+          folio: folioBase,
           cantidad: 1,
         });
 

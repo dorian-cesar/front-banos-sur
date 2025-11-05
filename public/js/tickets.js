@@ -256,16 +256,8 @@ async function imprimirTicket({
 
     // --- Generar e imprimir cada boleta ---
     for (let i = 0; i < cantidadBoletas; i++) {
-      // ✅ Calcular correlativo de folio correctamente
-      let folioActual;
-
-      if (typeof folioBase === "string") {
-        // Siempre concatenar un guion y número correlativo incremental
-        folioActual = `${folioBase}-${i + 1}`;
-      } else {
-        // Si llega algo inesperado (no string), lo convertimos a string por seguridad
-        folioActual = `${String(folioBase)}-${i + 1}`;
-      }
+      // ✅ Cada boleta tiene un folio diferente
+      const folioActual = computeFolioCorrelativo(folioBase, i);
 
       // ✅ Cada ticket tiene un código único
       const codigoUnico = esLote ? generarTokenNumerico() : Codigo;
@@ -753,29 +745,22 @@ async function continuarConPago(metodoPago) {
     });
 
     // ✅ FUNCIÓN CORREGIDA PARA CÁLCULO DE FOLIOS
-    const computeFolioCorrelativo = (base, offset) => {
+    function computeFolioCorrelativo(base, offset) {
       const baseStr = String(base).trim();
-      // Buscar si ya tiene un correlativo al final (ej: termina con -1, -2, etc.)
-      const match = baseStr.match(/-(\d+)$/);
-      if (match) {
-        const numero = parseInt(match[1], 10);
-        const sinCorrelativo = baseStr.slice(0, match.index);
-        const resultado = `${sinCorrelativo}-${numero + offset}`;
-        console.log(
-          `Folio con correlativo existente incrementado: ${resultado}`
-        );
-        return resultado;
+      const partes = baseStr.split("-");
+      // Detectar si el último segmento es un número pequeño (correlativo real)
+      const ultimo = partes[partes.length - 1];
+      if (!isNaN(ultimo) && partes.length > 2 && Number(ultimo) < 1000) {
+        partes[partes.length - 1] = (Number(ultimo) + offset).toString();
+        return partes.join("-");
       }
-      // Si no tiene correlativo al final, agregar uno nuevo
-      const resultado = `${baseStr}-${offset + 1}`;
-      console.log(`Folio nuevo con correlativo agregado: ${resultado}`);
-      return resultado;
-    };
-
-    console.log(`🔄 INICIANDO IMPRESIÓN DE LOTE: ${cantidad} tickets`);
-    console.log(
-      `📋 Folio base: ${folioBase}, Tipo: ${tipo}, Precio: $${precioFinal}`
-    );
+      // Si solo tiene un guion y el último número parece parte del folio (grande)
+      if (!isNaN(ultimo) && partes.length === 2 && Number(ultimo) >= 1000) {
+        return `${baseStr}-${offset + 1}`;
+      }
+      // Si no hay número al final, simplemente agregar correlativo
+      return `${baseStr}-${offset + 1}`;
+    }
 
     let ticketsImpresos = 0;
     let ticketsConError = 0;

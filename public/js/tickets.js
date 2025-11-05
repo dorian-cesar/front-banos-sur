@@ -261,7 +261,7 @@ async function imprimirTicket({
       console.log(
         `🧾 Ticket ${
           i + 1
-        }/${cantidadBoletas} → Ticket ${codigoUnico} | Folio ${folioActual}`
+        }/${cantidadBoletas} → Ticket ${codigoUnico} | Folio ${folioBase}`
       );
 
       const { PDFDocument, StandardFonts } = PDFLib;
@@ -326,7 +326,7 @@ async function imprimirTicket({
       // --- Detalle ---
       const detalle = [
         "---------------------------------------------",
-        `Nº boleta : ${folioActual}`,
+        `Nº boleta : ${folioBase}`,
         `Fecha : ${fechaFormateada}`,
         `Hora  : ${horaServidor}`,
         `Tipo  : ${tipo}`,
@@ -358,7 +358,7 @@ async function imprimirTicket({
         body: JSON.stringify({
           pdfData: pdfBase64,
           printer: "POS58",
-          filename: `ticket-${codigoUnico}-${folioActual}.pdf`,
+          filename: `ticket-${codigoUnico}-${folioBase}.pdf`,
         }),
       });
 
@@ -369,7 +369,7 @@ async function imprimirTicket({
       console.log(
         `✅ Ticket ${
           i + 1
-        }/${cantidadBoletas} (Folio ${folioActual}) impreso correctamente`
+        }/${cantidadBoletas} (Folio ${folioBase}) impreso correctamente`
       );
 
       // --- ⏸ Pausa para corte manual antes del siguiente ---

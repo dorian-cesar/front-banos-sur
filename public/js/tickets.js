@@ -259,19 +259,19 @@ async function imprimirTicket({
       function computeFolioCorrelativo(base, offset) {
         const baseStr = String(base).trim();
         const partes = baseStr.split("-");
-        // Detectar si el último segmento es un número pequeño (correlativo real)
         const ultimo = partes[partes.length - 1];
         if (!isNaN(ultimo) && partes.length > 2 && Number(ultimo) < 1000) {
-          partes[partes.length - 1] = (Number(ultimo) + offset).toString();
+          const numeroBase = Number(ultimo);
+          partes[partes.length - 1] = (numeroBase + offset).toString();
           return partes.join("-");
         }
-        // Si solo tiene un guion y el último número parece parte del folio (grande)
         if (!isNaN(ultimo) && partes.length === 2 && Number(ultimo) >= 1000) {
-          return `${baseStr}-${offset + 1}`;
+          if (offset === 0) return baseStr; // el primero conserva el folio base
+          return `${baseStr}-${offset}`; // siguiente boletas: -1, -2, etc.
         }
-        // Si no hay número al final, simplemente agregar correlativo
         return `${baseStr}-${offset + 1}`;
       }
+
       // ✅ Cada boleta tiene un folio diferente
       const folioActual = computeFolioCorrelativo(folioBase, i);
 
@@ -764,17 +764,16 @@ async function continuarConPago(metodoPago) {
     function computeFolioCorrelativo(base, offset) {
       const baseStr = String(base).trim();
       const partes = baseStr.split("-");
-      // Detectar si el último segmento es un número pequeño (correlativo real)
       const ultimo = partes[partes.length - 1];
       if (!isNaN(ultimo) && partes.length > 2 && Number(ultimo) < 1000) {
-        partes[partes.length - 1] = (Number(ultimo) + offset).toString();
+        const numeroBase = Number(ultimo);
+        partes[partes.length - 1] = (numeroBase + offset).toString();
         return partes.join("-");
       }
-      // Si solo tiene un guion y el último número parece parte del folio (grande)
       if (!isNaN(ultimo) && partes.length === 2 && Number(ultimo) >= 1000) {
-        return `${baseStr}-${offset + 1}`;
+        if (offset === 0) return baseStr; // el primero conserva el folio base
+        return `${baseStr}-${offset}`; // siguiente boletas: -1, -2, etc.
       }
-      // Si no hay número al final, simplemente agregar correlativo
       return `${baseStr}-${offset + 1}`;
     }
 

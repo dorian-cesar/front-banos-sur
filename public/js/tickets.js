@@ -437,15 +437,30 @@ function obtenerFechaHoraChile() {
     hour12: false,
   };
 
-  const fechaChile = new Intl.DateTimeFormat("es-CL", opciones).format(
+  const partes = new Intl.DateTimeFormat("es-CL", opciones).formatToParts(
     new Date()
   );
-  const [fecha, hora] = fechaChile.split(", ");
-  const [dia, mes, anio] = fecha.split("/");
+  const map = {};
+  for (const p of partes) {
+    if (p.type !== "literal") map[p.type] = p.value;
+  }
+
+  // Fallbacks por si acaso alguna parte no está presente
+  const year =
+    map.year ??
+    new Date().toLocaleString("en-US", {
+      timeZone: "America/Santiago",
+      year: "numeric",
+    });
+  const month = (map.month ?? "01").toString().padStart(2, "0");
+  const day = (map.day ?? "01").toString().padStart(2, "0");
+  const hour = (map.hour ?? "00").toString().padStart(2, "0");
+  const minute = (map.minute ?? "00").toString().padStart(2, "0");
+  const second = (map.second ?? "00").toString().padStart(2, "0");
 
   return {
-    fecha: `${anio}-${mes}-${dia}`,
-    hora,
+    fecha: `${year}-${month}-${day}`, // YYYY-MM-DD
+    hora: `${hour}:${minute}:${second}`, // HH:MM:SS
   };
 }
 

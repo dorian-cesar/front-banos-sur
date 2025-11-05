@@ -18,87 +18,26 @@ let datosPendientes = null;
 
 let botonActivo = null;
 
-let serviciosDisponibles = {}; 
+let serviciosDisponibles = {};
 
 // Fallbacks si la API no responde o no trae el tipo
-const PRECIO_FALLBACK = { "BAÑO": 500, "DUCHA": 3500 };
+const PRECIO_FALLBACK = { BAÑO: 500, DUCHA: 3500 };
 const getPrecio = (tipo) => {
-const api = Number(serviciosDisponibles?.[tipo]?.precio);
-  return Number.isFinite(api) && api > 0 ? api : (PRECIO_FALLBACK[tipo] ?? 0);
+  const api = Number(serviciosDisponibles?.[tipo]?.precio);
+  return Number.isFinite(api) && api > 0 ? api : PRECIO_FALLBACK[tipo] ?? 0;
 };
-
-async function obtenerFechaHoraChile() {
-  try {
-    // Intentar obtener la hora real desde un servidor confiable
-    const response = await fetch('https://worldtimeapi.org/api/timezone/America/Santiago', {
-      method: 'GET',
-      cache: 'no-cache'
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      const fechaHoraServidor = new Date(data.datetime);
-      
-      const anio = fechaHoraServidor.getFullYear();
-      const mes = String(fechaHoraServidor.getMonth() + 1).padStart(2, "0");
-      const dia = String(fechaHoraServidor.getDate()).padStart(2, "0");
-      const hora = String(fechaHoraServidor.getHours()).padStart(2, "0");
-      const minuto = String(fechaHoraServidor.getMinutes()).padStart(2, "0");
-      const segundo = String(fechaHoraServidor.getSeconds()).padStart(2, "0");
-
-      console.log(`✅ Hora REAL de Chile desde servidor: ${hora}:${minuto}:${segundo}`);
-      
-      return {
-        fecha: `${anio}-${mes}-${dia}`,
-        hora: `${hora}:${minuto}:${segundo}`
-      };
-    }
-  } catch (error) {
-    console.warn('No se pudo obtener hora del servidor, usando fallback:', error);
-  }
-  
-  // Fallback: método local mejorado
-  return obtenerFechaHoraChileFallback();
-}
-
-function obtenerFechaHoraChileFallback() {
-  const ahora = new Date();
-  
-  // Chile está actualmente en UTC-3 (horario de verano)
-  // Este offset lo debes actualizar manualmente cuando cambie el horario
-  const OFFSET_CHILE = -3; // ← ⚠️ CAMBIAR A -4 cuando termine el horario de verano
-  
-  // Calcular hora Chile manualmente
-  const horaUTC = ahora.getTime() + (ahora.getTimezoneOffset() * 60000);
-  const horaChile = new Date(horaUTC + (3600000 * OFFSET_CHILE));
-  
-  const anio = horaChile.getFullYear();
-  const mes = String(horaChile.getMonth() + 1).padStart(2, "0");
-  const dia = String(horaChile.getDate()).padStart(2, "0");
-  const hora = String(horaChile.getHours()).padStart(2, "0");
-  const minuto = String(horaChile.getMinutes()).padStart(2, "0");
-  const segundo = String(horaChile.getSeconds()).padStart(2, "0");
-
-  console.log(`⚠️ Hora FALLBACK Chile: ${hora}:${minuto}:${segundo} (offset manual: ${OFFSET_CHILE})`);
-  console.log(`🖥️ Hora PC: ${ahora.getHours()}:${ahora.getMinutes()}`);
-  
-  return {
-    fecha: `${anio}-${mes}-${dia}`,
-    hora: `${hora}:${minuto}:${segundo}`
-  };
-}
 
 async function cargarServicios() {
   try {
-    const token = sessionStorage.getItem('authToken');
-    if (!token) throw new Error('No se encontró token de autenticación');
+    const token = sessionStorage.getItem("authToken");
+    if (!token) throw new Error("No se encontró token de autenticación");
 
-    const res = await fetch('https://backend-banios.dev-wit.com/api/services', {
-      method: 'GET',
+    const res = await fetch("https://backend-banios.dev-wit.com/api/services", {
+      method: "GET",
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
     });
 
     if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
@@ -106,19 +45,20 @@ async function cargarServicios() {
     const data = await res.json();
 
     // Ahora la API devuelve los servicios en data.data
-    if (!Array.isArray(data.data)) throw new Error('Formato inesperado en respuesta de servicios');
+    if (!Array.isArray(data.data))
+      throw new Error("Formato inesperado en respuesta de servicios");
 
     serviciosDisponibles = {};
 
     // Filtrar solo servicios con estado activo
-    const serviciosActivos = data.data.filter(s => s.estado === 'activo');
+    const serviciosActivos = data.data.filter((s) => s.estado === "activo");
 
-    serviciosActivos.forEach(s => {
+    serviciosActivos.forEach((s) => {
       serviciosDisponibles[s.tipo] = {
         id: s.id,
         nombre: s.nombre,
         precio: parseFloat(s.precio),
-        estado: s.estado
+        estado: s.estado,
       };
     });
 
@@ -140,58 +80,85 @@ async function cargarServicios() {
 
     document.querySelectorAll(".generarQR").forEach((btn) => {
       btn.addEventListener("click", (e) => {
-          e.preventDefault();
+        e.preventDefault();
 
-          const estado_caja = localStorage.getItem('estado_caja');
-          const id_aperturas_cierres = localStorage.getItem('id_aperturas_cierres');
+        const estado_caja = localStorage.getItem("estado_caja");
+        const id_aperturas_cierres = localStorage.getItem(
+          "id_aperturas_cierres"
+        );
 
-          if (estado_caja !== 'abierta') {
-              Swal.fire({
-                  icon: 'warning',
-                  title: 'Caja cerrada',
-                  text: 'Por favor, primero debe abrir la caja antes de generar un QR.',
-                  confirmButtonText: 'Entendido'
-              });
-              return;
-          }
+        if (estado_caja !== "abierta") {
+          Swal.fire({
+            icon: "warning",
+            title: "Caja cerrada",
+            text: "Por favor, primero debe abrir la caja antes de generar un QR.",
+            confirmButtonText: "Entendido",
+          });
+          return;
+        }
 
-          const fechaHoraAct = new Date();
-          const horaStr = `${fechaHoraAct.getHours().toString().padStart(2, '0')}:${fechaHoraAct.getMinutes().toString().padStart(2, '0')}:${fechaHoraAct.getSeconds().toString().padStart(2, '0')}`;
-          const fechaStr = fechaHoraAct.toISOString().split("T")[0];
-          const tipoStr = btn.dataset.tipo;
-          const numeroT = generarTokenNumerico();
-          const valor = getPrecio(tipoStr);
+        const fechaHoraAct = new Date();
+        const horaStr = `${fechaHoraAct
+          .getHours()
+          .toString()
+          .padStart(2, "0")}:${fechaHoraAct
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}:${fechaHoraAct
+          .getSeconds()
+          .toString()
+          .padStart(2, "0")}`;
+        const fechaStr = fechaHoraAct.toISOString().split("T")[0];
+        const tipoStr = btn.dataset.tipo;
+        const numeroT = generarTokenNumerico();
+        const valor = getPrecio(tipoStr);
 
-          datosPendientes = {
-              Codigo: numeroT,
-              hora: horaStr,
-              fecha: fechaStr,
-              tipo: tipoStr,
-              valor: valor,
-              id_caja: id_aperturas_cierres,
-              estado_caja
-          };
+        datosPendientes = {
+          Codigo: numeroT,
+          hora: horaStr,
+          fecha: fechaStr,
+          tipo: tipoStr,
+          valor: valor,
+          id_caja: id_aperturas_cierres,
+          estado_caja,
+        };
 
-          botonActivo = btn;
-          btn.disabled = true;
-          btn.classList.add("disabled");
+        botonActivo = btn;
+        btn.disabled = true;
+        btn.classList.add("disabled");
 
-          document.getElementById("modalPago").style.display = "flex";
+        document.getElementById("modalPago").style.display = "flex";
       });
-  });
+    });
 
     console.log("Servicios activos cargados:", serviciosDisponibles);
-
   } catch (err) {
-    console.error('Error al cargar servicios:', err);
-    alert('Error al cargar servicios disponibles: ' + err.message);
+    console.error("Error al cargar servicios:", err);
+    alert("Error al cargar servicios disponibles: " + err.message);
   }
 }
 
-async function imprimirTicket({ Codigo, hora, fecha, tipo, valor, qrBase64, folio, cantidad }) {
+async function imprimirTicket({
+  Codigo,
+  hora,
+  fecha,
+  tipo,
+  valor,
+  qrBase64,
+  folio,
+  cantidad,
+}) {
   try {
     console.log("🟢 Iniciando proceso de impresión de ticket");
-    console.log("📋 Datos recibidos:", { Codigo, hora, fecha, tipo, valor, folio, cantidad });
+    console.log("📋 Datos recibidos:", {
+      Codigo,
+      hora,
+      fecha,
+      tipo,
+      valor,
+      folio,
+      cantidad,
+    });
 
     if (!Codigo || !tipo) throw new Error("Campos requeridos faltantes");
 
@@ -212,7 +179,11 @@ async function imprimirTicket({ Codigo, hora, fecha, tipo, valor, qrBase64, foli
     // --- Obtener folio desde la API real ---
     if (!folioBase) {
       try {
-        console.log(esLote ? "📦 Generando lote de boletas..." : "🧾 Generando boleta individual...");
+        console.log(
+          esLote
+            ? "📦 Generando lote de boletas..."
+            : "🧾 Generando boleta individual..."
+        );
 
         const endpoint = esLote
           ? "https://backend-banios.dev-wit.com/api/boletas/enviar-lote"
@@ -233,22 +204,22 @@ async function imprimirTicket({ Codigo, hora, fecha, tipo, valor, qrBase64, foli
         // ✅ Obtener el token desde sessionStorage
         const token = sessionStorage.getItem("authToken");
         if (!token) {
-          throw new Error("No se encontró token de autenticación. Inicia sesión nuevamente.");
+          throw new Error(
+            "No se encontró token de autenticación. Inicia sesión nuevamente."
+          );
         }
 
         const response = await fetch(endpoint, {
           method: "POST",
-      /*    headers: {
+          /*    headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`, // ✅ Se incluye token
           },
       */
           headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-
-
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
 
           body: JSON.stringify(bodyData),
         });
@@ -264,16 +235,23 @@ async function imprimirTicket({ Codigo, hora, fecha, tipo, valor, qrBase64, foli
           cantidadBoletas = data.cantidad || cantidadBoletas;
 
           console.log(
-            `✅ Folio base asignado: ${folioBase} | Ficticia: ${esFicticia ? "Sí" : "No"} | cantidad: ${cantidadBoletas}`
+            `✅ Folio base asignado: ${folioBase} | Ficticia: ${
+              esFicticia ? "Sí" : "No"
+            } | cantidad: ${cantidadBoletas}`
           );
         } else {
           console.warn("⚠️ API devolvió error:", data.error || "desconocido");
         }
       } catch (apiErr) {
-        console.warn("❌ Error al conectar con la API de boletas:", apiErr.message);
+        console.warn(
+          "❌ Error al conectar con la API de boletas:",
+          apiErr.message
+        );
       }
     } else {
-      console.log(`📄 Usando folio base proporcionado manualmente: ${folioBase}`);
+      console.log(
+        `📄 Usando folio base proporcionado manualmente: ${folioBase}`
+      );
     }
 
     // --- Generar e imprimir cada boleta ---
@@ -299,7 +277,11 @@ async function imprimirTicket({ Codigo, hora, fecha, tipo, valor, qrBase64, foli
 
       // ✅ Cada ticket tiene un código único
       const codigoUnico = esLote ? generarTokenNumerico() : Codigo;
-      console.log(`🧾 Ticket ${i + 1}/${cantidadBoletas} → Ticket ${codigoUnico} | Folio ${folioActual}`);
+      console.log(
+        `🧾 Ticket ${
+          i + 1
+        }/${cantidadBoletas} → Ticket ${codigoUnico} | Folio ${folioActual}`
+      );
 
       const { PDFDocument, StandardFonts } = PDFLib;
       const pdfDoc = await PDFDocument.create();
@@ -347,7 +329,9 @@ async function imprimirTicket({ Codigo, hora, fecha, tipo, valor, qrBase64, foli
 
       // --- QR ---
       if (qrBase64) {
-        const qrImage = await pdfDoc.embedPng(`data:image/png;base64,${qrBase64}`);
+        const qrImage = await pdfDoc.embedPng(
+          `data:image/png;base64,${qrBase64}`
+        );
         const qrDims = qrImage.scale(0.5);
         page.drawImage(qrImage, {
           x: (210 - qrDims.width) / 2,
@@ -390,9 +374,6 @@ async function imprimirTicket({ Codigo, hora, fecha, tipo, valor, qrBase64, foli
         method: "POST",
         headers: { "Content-Type": "application/json" },
 
-
-
-
         body: JSON.stringify({
           pdfData: pdfBase64,
           printer: "POS58",
@@ -401,12 +382,21 @@ async function imprimirTicket({ Codigo, hora, fecha, tipo, valor, qrBase64, foli
       });
 
       const result = await responsePrint.json();
-      if (!result.success) throw new Error(result.message || "Error al imprimir");
+      if (!result.success)
+        throw new Error(result.message || "Error al imprimir");
 
-      console.log(`✅ Ticket ${i + 1}/${cantidadBoletas} (Folio ${folioActual}) impreso correctamente`);
+      console.log(
+        `✅ Ticket ${
+          i + 1
+        }/${cantidadBoletas} (Folio ${folioActual}) impreso correctamente`
+      );
 
       // --- ⏸ Pausa para corte manual antes del siguiente ---
-      if (esLote && i + 1 < cantidadBoletas && typeof pausaParaCorte === "function") {
+      if (
+        esLote &&
+        i + 1 < cantidadBoletas &&
+        typeof pausaParaCorte === "function"
+      ) {
         await pausaParaCorte(i + 1, cantidadBoletas);
       }
     }
@@ -435,22 +425,46 @@ function cerrarModalPago() {
   datosPendientes = null;
 }
 
+function obtenerFechaHoraChile() {
+  const opciones = {
+    timeZone: "America/Santiago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  };
+
+  const fechaChile = new Intl.DateTimeFormat("es-CL", opciones).format(
+    new Date()
+  );
+  const [fecha, hora] = fechaChile.split(", ");
+  const [dia, mes, anio] = fecha.split("/");
+
+  return {
+    fecha: `${anio}-${mes}-${dia}`,
+    hora,
+  };
+}
+
 async function continuarConPago(metodoPago) {
   if (!datosPendientes) return;
 
   console.log(`🟢 INICIANDO PAGO - Método: ${metodoPago}`, datosPendientes);
 
   const { Codigo, tipo } = datosPendientes;
-  const estado_caja = localStorage.getItem('estado_caja');
+  const estado_caja = localStorage.getItem("estado_caja");
   const precioFinal = getPrecio(tipo);
-  const id_caja = localStorage.getItem('id_aperturas_cierres');
+  const id_caja = localStorage.getItem("id_aperturas_cierres");
 
   // 🔹 Obtener ID del usuario desde el token
-  const token = sessionStorage.getItem('authToken');
+  const token = sessionStorage.getItem("authToken");
   const jwtPayload = parseJwt(token);
   if (!jwtPayload?.id) {
-    alert('Sesión expirada. Inicia sesión nuevamente.');
-    window.location.href = '/login.html';
+    alert("Sesión expirada. Inicia sesión nuevamente.");
+    window.location.href = "/login.html";
     return;
   }
   const id_usuario = jwtPayload.id;
@@ -470,14 +484,21 @@ async function continuarConPago(metodoPago) {
       });
 
       const contentType = res.headers.get("content-type");
-      const result = contentType?.includes("application/json") ? await res.json() : null;
+      const result = contentType?.includes("application/json")
+        ? await res.json()
+        : null;
 
-      if (!result?.success || !result?.data) throw new Error(result?.message || "No se recibió respuesta del POS");
+      if (!result?.success || !result?.data)
+        throw new Error(result?.message || "No se recibió respuesta del POS");
 
       const data = result.data;
 
       if (data.responseCode !== 0) {
-        throw new Error(`Transacción fallida: ${data.responseMessage || "No aprobado por el POS"}`);
+        throw new Error(
+          `Transacción fallida: ${
+            data.responseMessage || "No aprobado por el POS"
+          }`
+        );
       }
 
       console.log("✅ Transacción aprobada:", {
@@ -486,26 +507,30 @@ async function continuarConPago(metodoPago) {
         amount: data.amount,
         last4Digits: data.last4Digits,
         cardType: data.cardType,
-        cardBrand: data.cardBrand
+        cardBrand: data.cardBrand,
       });
 
       // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
-      const { fecha, hora } = await obtenerFechaHoraChile();
+      const { fecha, hora } = obtenerFechaHoraChile();
       console.log(`📅 Fecha/hora Chile obtenida: ${fecha} ${hora}`);
 
       // Generar QR y registrar movimiento local
       QR.makeCode(Codigo);
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       const qrCanvas = contenedorQR.querySelector("canvas");
-      const qrBase64 = qrCanvas ? qrCanvas.toDataURL("image/png").replace(/^data:image\/png;base64,/, "") : "";
+      const qrBase64 = qrCanvas
+        ? qrCanvas
+            .toDataURL("image/png")
+            .replace(/^data:image\/png;base64,/, "")
+        : "";
 
       console.log(`📤 Enviando a callApi - Código: ${Codigo}`);
       await callApi({ Codigo, hora, fecha, tipo, valor: precioFinal });
 
       console.log(`📊 Registrando movimiento en caja - Código: ${Codigo}`);
-      await fetch('http://localhost:3000/api/caja/movimientos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      await fetch("http://localhost:3000/api/caja/movimientos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           codigo: Codigo,
           fecha,
@@ -520,12 +545,19 @@ async function continuarConPago(metodoPago) {
           authorizationCode: data.authorizationCode,
           last4Digits: data.last4Digits,
           cardType: data.cardType,
-          cardBrand: data.cardBrand
-        })
+          cardBrand: data.cardBrand,
+        }),
       });
 
       console.log(`🖨️ Iniciando impresión de ticket - Código: ${Codigo}`);
-      await imprimirTicket({ Codigo, hora, fecha, tipo, valor: precioFinal, qrBase64 });
+      await imprimirTicket({
+        Codigo,
+        hora,
+        fecha,
+        tipo,
+        valor: precioFinal,
+        qrBase64,
+      });
 
       try {
         console.log(`👤 Registrando en ZKTeco - Código: ${Codigo}`);
@@ -536,7 +568,6 @@ async function continuarConPago(metodoPago) {
       }
 
       console.log(`✅ PAGO TARJETA COMPLETADO - Código: ${Codigo}`);
-
     } catch (err) {
       console.error("❌ Error durante el pago:", err);
       Swal.fire({
@@ -559,7 +590,7 @@ async function continuarConPago(metodoPago) {
 
   // 🔹 Mostrar datos en interfaz
   // ✅ OBTENER FECHA/HORA ACTUAL para mostrar en interfaz - CON AWAIT
-  const { fecha: fechaDisplay, hora: horaDisplay } = await obtenerFechaHoraChile();
+  const { fecha: fechaDisplay, hora: horaDisplay } = obtenerFechaHoraChile();
   parrafoFecha.textContent = fechaDisplay;
   parrafoHora.textContent = horaDisplay;
   parrafoTipo.textContent = `${tipo} (${metodoPago})`;
@@ -570,23 +601,32 @@ async function continuarConPago(metodoPago) {
   // 🔹 Pago EFECTIVO
   if (metodoPago === "EFECTIVO") {
     // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
-    const { fecha: fechaI, hora: horaI } = await obtenerFechaHoraChile();
+    const { fecha: fechaI, hora: horaI } = obtenerFechaHoraChile();
     const codigoI = generarTokenNumerico();
 
     console.log(`💰 INICIANDO PAGO EFECTIVO - Nuevo código: ${codigoI}`);
 
     QR.makeCode(codigoI);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     const qrCanvas = contenedorQR.querySelector("canvas");
-    const qrBase64 = qrCanvas ? qrCanvas.toDataURL("image/png").replace(/^data:image\/png;base64,/,"") : "";
+    const qrBase64 = qrCanvas
+      ? qrCanvas.toDataURL("image/png").replace(/^data:image\/png;base64,/, "")
+      : "";
 
     console.log(`📤 Enviando a callApi - Código: ${codigoI}`);
-    await callApi({ Codigo: codigoI, hora: horaI, fecha: fechaI, tipo, valor: precioFinal, medio_pago: metodoPago });
+    await callApi({
+      Codigo: codigoI,
+      hora: horaI,
+      fecha: fechaI,
+      tipo,
+      valor: precioFinal,
+      medio_pago: metodoPago,
+    });
 
     console.log(`📊 Registrando movimiento en caja - Código: ${codigoI}`);
-    await fetch('http://localhost:3000/api/caja/movimientos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    await fetch("http://localhost:3000/api/caja/movimientos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         codigo: codigoI,
         fecha: fechaI,
@@ -596,12 +636,19 @@ async function continuarConPago(metodoPago) {
         metodoPago,
         estado_caja,
         id_usuario,
-        id_caja
-      })
+        id_caja,
+      }),
     });
 
     console.log(`🖨️ Iniciando impresión de ticket - Código: ${codigoI}`);
-    await imprimirTicket({ Codigo: codigoI, hora: horaI, fecha: fechaI, tipo, valor: precioFinal, qrBase64 });
+    await imprimirTicket({
+      Codigo: codigoI,
+      hora: horaI,
+      fecha: fechaI,
+      tipo,
+      valor: precioFinal,
+      qrBase64,
+    });
 
     try {
       console.log(`👤 Registrando en ZKTeco - Código: ${codigoI}`);
@@ -613,11 +660,11 @@ async function continuarConPago(metodoPago) {
 
     console.log(`✅ PAGO EFECTIVO COMPLETADO - Código: ${codigoI}`);
 
-  // 🔹 Pago EFECTIVO_LOTE
+    // 🔹 Pago EFECTIVO_LOTE
   } else if (metodoPago === "EFECTIVO_LOTE") {
     console.log(`📦 INICIANDO PAGO EFECTIVO LOTE`);
     const cantidad = await seleccionarCantidadTicketsAccesible();
-    
+
     if (!cantidad || cantidad <= 0) {
       console.log(`❌ LOTE CANCELADO - Cantidad: ${cantidad}`);
       hideSpinner();
@@ -628,26 +675,29 @@ async function continuarConPago(metodoPago) {
     console.log(`🎯 LOTE CONFIRMADO - Cantidad: ${cantidad} tickets`);
 
     // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
-    const { fecha: fechaI, hora: horaI } = await obtenerFechaHoraChile();
-    console.log(`📅 Fecha/hora Chile para lote: ${fecha} ${hora}`);
+    const { fecha: fechaI, hora: horaI } = obtenerFechaHoraChile();
+    console.log(`📅 Fecha/hora Chile para lote: ${fechaI} ${horaI}`);
 
-    const id_aperturas_cierres = localStorage.getItem('id_aperturas_cierres');
+    const id_aperturas_cierres = localStorage.getItem("id_aperturas_cierres");
 
     let folioBase = null;
     let ficticiaLote = false;
-    
+
     console.log(`📡 Solicitando folio base para lote de ${cantidad} tickets`);
     try {
-      const resLote = await fetch("https://backend-banios.dev-wit.com/api/boletas/enviar-lote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nombre: tipo,
-          precio: Number(precioFinal) || 0,
-          cantidad: Number(cantidad),
-          monto_total: (Number(precioFinal) || 0) * Number(cantidad)
-        })
-      });
+      const resLote = await fetch(
+        "https://backend-banios.dev-wit.com/api/boletas/enviar-lote",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nombre: tipo,
+            precio: Number(precioFinal) || 0,
+            cantidad: Number(cantidad),
+            monto_total: (Number(precioFinal) || 0) * Number(cantidad),
+          }),
+        }
+      );
       const loteData = await resLote.json();
       console.log("🔍 Respuesta enviar-lote:", loteData);
 
@@ -656,16 +706,22 @@ async function continuarConPago(metodoPago) {
       }
       folioBase = loteData.folio.toString();
       ficticiaLote = loteData.ficticia === true;
-      
-      console.log(`✅ Folio base obtenido: ${folioBase} | Ficticia: ${ficticiaLote}`);
+
+      console.log(
+        `✅ Folio base obtenido: ${folioBase} | Ficticia: ${ficticiaLote}`
+      );
     } catch (e) {
       console.error("❌ Error al solicitar enviar-lote:", e);
       Swal.fire({
         icon: "error",
         title: "Error al emitir boletas",
         text: e.message || "No fue posible obtener folios del SII.",
-        customClass: { popup: "alert-card", title: "swal-font", confirmButton: "my-confirm-btn" },
-        buttonsStyling: false
+        customClass: {
+          popup: "alert-card",
+          title: "swal-font",
+          confirmButton: "my-confirm-btn",
+        },
+        buttonsStyling: false,
       });
       hideSpinner();
       cerrarModalPago();
@@ -685,36 +741,38 @@ async function continuarConPago(metodoPago) {
         metodoPago: "EFECTIVO",
         estado_caja,
         id_usuario,
-        id_caja: id_aperturas_cierres
+        id_caja: id_aperturas_cierres,
       }),
     });
 
     // ✅ FUNCIÓN CORREGIDA PARA CÁLCULO DE FOLIOS
     const computeFolioCorrelativo = (base, offset) => {
       console.log(`🔢 Calculando folio - Base: ${base}, Offset: ${offset}`);
-      
+
       // Si el folio base ya tiene formato con guion (ej: "412-2729")
       if (typeof base === "string" && base.includes("-")) {
         const lastIndex = base.lastIndexOf("-");
         const prefijo = base.substring(0, lastIndex + 1); // Incluye el guion
         const sufijo = base.substring(lastIndex + 1);
         const n = parseInt(sufijo);
-        
-        console.log(`📝 Parseando folio con guion - Prefijo: "${prefijo}", Sufijo: "${sufijo}", N: ${n}`);
-        
+
+        console.log(
+          `📝 Parseando folio con guion - Prefijo: "${prefijo}", Sufijo: "${sufijo}", N: ${n}`
+        );
+
         if (!isNaN(n)) {
           const resultado = `${prefijo}${n + offset}`;
           console.log(`✅ Folio calculado: ${resultado}`);
           return resultado;
         }
-      } 
+      }
       // Si es puramente numérico
       else if (!isNaN(Number(base))) {
         const resultado = (Number(base) + offset).toString();
         console.log(`✅ Folio numérico calculado: ${resultado}`);
         return resultado;
       }
-      
+
       // Fallback para formato no reconocido
       const resultado = `${base}-${offset + 1}`;
       console.log(`⚠️ Folio fallback: ${resultado}`);
@@ -722,7 +780,9 @@ async function continuarConPago(metodoPago) {
     };
 
     console.log(`🔄 INICIANDO IMPRESIÓN DE LOTE: ${cantidad} tickets`);
-    console.log(`📋 Folio base: ${folioBase}, Tipo: ${tipo}, Precio: $${precioFinal}`);
+    console.log(
+      `📋 Folio base: ${folioBase}, Tipo: ${tipo}, Precio: $${precioFinal}`
+    );
 
     let ticketsImpresos = 0;
     let ticketsConError = 0;
@@ -731,29 +791,33 @@ async function continuarConPago(metodoPago) {
       try {
         const codigoI = generarTokenNumerico();
         const folioActual = computeFolioCorrelativo(folioBase, i);
-        
+
         console.log(`\n🎫 TICKET ${i + 1}/${cantidad}:`, {
           folio: folioActual,
           codigo: codigoI,
-          iteracion: i
+          iteracion: i,
         });
 
         // Generar QR
         QR.makeCode(codigoI);
-        await new Promise(resolve => setTimeout(resolve, 400));
+        await new Promise((resolve) => setTimeout(resolve, 400));
         const qrCanvasI = contenedorQR.querySelector("canvas");
-        const qrBase64I = qrCanvasI ? qrCanvasI.toDataURL("image/png").replace(/^data:image\/png;base64,/, "") : "";
+        const qrBase64I = qrCanvasI
+          ? qrCanvasI
+              .toDataURL("image/png")
+              .replace(/^data:image\/png;base64,/, "")
+          : "";
 
         // Registrar en API
         console.log(`📤 Enviando a callApi - Ticket ${i + 1}`);
-        await callApi({ 
-          Codigo: codigoI, 
-          hora: horaI, 
-          fecha: fechaI, 
-          tipo, 
-          valor: precioFinal, 
+        await callApi({
+          Codigo: codigoI,
+          hora: horaI,
+          fecha: fechaI,
+          tipo,
+          valor: precioFinal,
           id_caja: id_aperturas_cierres,
-          medio_pago: metodoPago 
+          medio_pago: metodoPago,
         });
 
         // Imprimir ticket
@@ -766,7 +830,7 @@ async function continuarConPago(metodoPago) {
           valor: precioFinal,
           qrBase64: qrBase64I,
           folio: folioActual,
-          cantidad: 1
+          cantidad: 1,
         });
 
         ticketsImpresos++;
@@ -787,7 +851,6 @@ async function continuarConPago(metodoPago) {
         }
 
         console.log(`✅ TICKET ${i + 1} COMPLETADO`);
-
       } catch (error) {
         ticketsConError++;
         console.error(`❌ ERROR en ticket ${i + 1}:`, error.message);
@@ -799,7 +862,9 @@ async function continuarConPago(metodoPago) {
     console.log(`✅ Tickets impresos exitosamente: ${ticketsImpresos}`);
     console.log(`❌ Tickets con error: ${ticketsConError}`);
     console.log(`🎯 Total solicitado: ${cantidad}`);
-    console.log(`📈 Eficiencia: ${((ticketsImpresos / cantidad) * 100).toFixed(1)}%`);
+    console.log(
+      `📈 Eficiencia: ${((ticketsImpresos / cantidad) * 100).toFixed(1)}%`
+    );
 
     if (typeof confirmarImpresionExitosa === "function") {
       await confirmarImpresionExitosa(ticketsImpresos);
@@ -816,20 +881,23 @@ async function continuarConPago(metodoPago) {
   document.getElementById("modalPago").style.display = "none";
   datosPendientes = null;
   hideSpinner();
-  
+
   console.log(`🏁 PROCESO DE PAGO FINALIZADO - Método: ${metodoPago}`);
 }
 
 function parseJwt(token) {
   try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
-      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-    ).join(''));
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
     return JSON.parse(jsonPayload);
   } catch (err) {
-    console.error('Token inválido:', err);
+    console.error("Token inválido:", err);
     return null;
   }
 }
@@ -856,36 +924,44 @@ async function seleccionarCantidadTicketsAccesible() {
       popup: "alert-card",
       title: "swal-font",
       confirmButton: "my-confirm-btn",
-      cancelButton: "my-cancel-btn"
+      cancelButton: "my-cancel-btn",
     },
     buttonsStyling: false,
     allowOutsideClick: false,
     allowEscapeKey: false,
     didOpen: () => {
       const grid = Swal.getHtmlContainer().querySelector(".cantidad-grid");
-      grid.querySelectorAll(".cantidad-btn").forEach(btn => {
+      grid.querySelectorAll(".cantidad-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
-          grid.querySelectorAll(".cantidad-btn").forEach(b => b.classList.remove("selected"));
+          grid
+            .querySelectorAll(".cantidad-btn")
+            .forEach((b) => b.classList.remove("selected"));
           btn.classList.add("selected");
         });
       });
       const manual = Swal.getHtmlContainer().querySelector("#cantidadManual");
       manual.addEventListener("focus", () => {
-        grid.querySelectorAll(".cantidad-btn").forEach(b => b.classList.remove("selected"));
+        grid
+          .querySelectorAll(".cantidad-btn")
+          .forEach((b) => b.classList.remove("selected"));
       });
     },
     preConfirm: () => {
-      const manual = Number(Swal.getHtmlContainer().querySelector("#cantidadManual").value);
-      const selectedBtn = Swal.getHtmlContainer().querySelector(".cantidad-btn.selected");
+      const manual = Number(
+        Swal.getHtmlContainer().querySelector("#cantidadManual").value
+      );
+      const selectedBtn = Swal.getHtmlContainer().querySelector(
+        ".cantidad-btn.selected"
+      );
       const quick = selectedBtn ? Number(selectedBtn.dataset.value) : null;
-      
+
       if (manual && manual > 0 && manual <= 25) return manual;
       if (quick && quick > 0) return quick;
-      
+
       Swal.showValidationMessage("Seleccione una cantidad válida (1 a 25).");
       return false;
-    }
-  }).then(r => r.isConfirmed ? Number(r.value) : null);
+    },
+  }).then((r) => (r.isConfirmed ? Number(r.value) : null));
 }
 
 // 3.2) Pausa para corte manual (entre tickets)
@@ -898,11 +974,11 @@ async function pausaParaCorte(indice, total) {
     customClass: {
       popup: "alert-card",
       title: "swal-font",
-      confirmButton: "my-confirm-btn"
+      confirmButton: "my-confirm-btn",
     },
     buttonsStyling: false,
     allowOutsideClick: false,
-    allowEscapeKey: false
+    allowEscapeKey: false,
   });
 }
 
@@ -916,9 +992,9 @@ async function confirmarImpresionExitosa(total) {
     customClass: {
       popup: "alert-card",
       title: "swal-font",
-      confirmButton: "my-confirm-btn"
+      confirmButton: "my-confirm-btn",
     },
-    buttonsStyling: false
+    buttonsStyling: false,
   });
 }
 
@@ -936,10 +1012,10 @@ function escribirTexto() {
 
 async function callApi(datos) {
   // ✅ Asegurar que siempre se incluya id_caja desde localStorage
-  const id_caja = localStorage.getItem('id_aperturas_cierres');
+  const id_caja = localStorage.getItem("id_aperturas_cierres");
   const payload = {
     ...datos,
-    id_caja: datos.id_caja ?? id_caja ?? null
+    id_caja: datos.id_caja ?? id_caja ?? null,
   };
 
   console.log("📦 Enviando datos a save.php:", payload);
@@ -967,7 +1043,6 @@ async function callApi(datos) {
   }
 }
 
-
 function printQR() {
   const ventanaImpr = window.open("", "_blank");
 
@@ -991,10 +1066,15 @@ function printQR() {
     alert("No hay código QR generado para imprimir.");
     return;
   }
-  
+
   const precio =
-    (serviciosDisponibles?.[tipoSeleccionado]?.precio ?? datosPendientes?.valor ?? null) != null
-      ? `$${Number((serviciosDisponibles?.[tipoSeleccionado]?.precio ?? datosPendientes?.valor)).toLocaleString("es-CL")}`
+    (serviciosDisponibles?.[tipoSeleccionado]?.precio ??
+      datosPendientes?.valor ??
+      null) != null
+      ? `$${Number(
+          serviciosDisponibles?.[tipoSeleccionado]?.precio ??
+            datosPendientes?.valor
+        ).toLocaleString("es-CL")}`
       : "No definido";
 
   ventanaImpr.document.write(`

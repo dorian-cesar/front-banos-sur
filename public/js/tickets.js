@@ -259,20 +259,12 @@ async function imprimirTicket({
       // ✅ Calcular correlativo de folio correctamente
       let folioActual;
 
-      // Si el folio contiene un guion, por ejemplo "412-2729"
-      if (typeof folioBase === "string" && folioBase.includes("-")) {
-        const [prefijo, sufijo] = folioBase.split("-");
-        const baseNum = parseInt(sufijo);
-        const siguiente = isNaN(baseNum) ? i : baseNum + i;
-        folioActual = `${prefijo}-${siguiente}`;
-      }
-      // Si el folio es puramente numérico
-      else if (!isNaN(Number(folioBase))) {
-        folioActual = (Number(folioBase) + i).toString();
-      }
-      // Si no tiene formato reconocible, se usa un sufijo incremental
-      else {
+      if (typeof folioBase === "string") {
+        // Siempre concatenar un guion y número correlativo incremental
         folioActual = `${folioBase}-${i + 1}`;
+      } else {
+        // Si llega algo inesperado (no string), lo convertimos a string por seguridad
+        folioActual = `${String(folioBase)}-${i + 1}`;
       }
 
       // ✅ Cada ticket tiene un código único
@@ -762,35 +754,11 @@ async function continuarConPago(metodoPago) {
 
     // ✅ FUNCIÓN CORREGIDA PARA CÁLCULO DE FOLIOS
     const computeFolioCorrelativo = (base, offset) => {
-      console.log(`🔢 Calculando folio - Base: ${base}, Offset: ${offset}`);
+      // Convertimos la base a string por seguridad
+      const baseStr = String(base);
 
-      // Si el folio base ya tiene formato con guion (ej: "412-2729")
-      if (typeof base === "string" && base.includes("-")) {
-        const lastIndex = base.lastIndexOf("-");
-        const prefijo = base.substring(0, lastIndex + 1); // Incluye el guion
-        const sufijo = base.substring(lastIndex + 1);
-        const n = parseInt(sufijo);
-
-        console.log(
-          `📝 Parseando folio con guion - Prefijo: "${prefijo}", Sufijo: "${sufijo}", N: ${n}`
-        );
-
-        if (!isNaN(n)) {
-          const resultado = `${prefijo}${n + offset}`;
-          console.log(`✅ Folio calculado: ${resultado}`);
-          return resultado;
-        }
-      }
-      // Si es puramente numérico
-      else if (!isNaN(Number(base))) {
-        const resultado = (Number(base) + offset).toString();
-        console.log(`✅ Folio numérico calculado: ${resultado}`);
-        return resultado;
-      }
-
-      // Fallback para formato no reconocido
-      const resultado = `${base}-${offset + 1}`;
-      console.log(`⚠️ Folio fallback: ${resultado}`);
+      // Siempre generar correlativo con guion y número incremental
+      const resultado = `${baseStr}-${offset + 1}`;
       return resultado;
     };
 

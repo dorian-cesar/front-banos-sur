@@ -254,16 +254,8 @@ async function imprimirTicket({
       );
     }
 
-    function computeFolioCorrelativo(base, offset) {
-      const baseStr = String(base).trim();
-      return `${baseStr}-${offset + 1}`;
-    }
-
     // --- Generar e imprimir cada boleta ---
     for (let i = 0; i < cantidadBoletas; i++) {
-      // ✅ Cada boleta tiene un folio diferente
-      const folioActual = computeFolioCorrelativo(folioBase, i);
-
       // ✅ Cada ticket tiene un código único
       const codigoUnico = esLote ? generarTokenNumerico() : Codigo;
       console.log(
@@ -749,22 +741,10 @@ async function continuarConPago(metodoPago) {
       }),
     });
 
-    // ✅ FUNCIÓN CORREGIDA PARA CÁLCULO DE FOLIOS
-    // function computeFolioCorrelativo(base, offset) {
-    //   const baseStr = String(base).trim();
-    //   const partes = baseStr.split("-");
-    //   const ultimo = partes[partes.length - 1];
-    //   if (!isNaN(ultimo) && partes.length > 2 && Number(ultimo) < 1000) {
-    //     const numeroBase = Number(ultimo);
-    //     partes[partes.length - 1] = (numeroBase + offset).toString();
-    //     return partes.join("-");
-    //   }
-    //   if (!isNaN(ultimo) && partes.length === 2 && Number(ultimo) >= 1000) {
-    //     if (offset === 0) return baseStr; // el primero conserva el folio base
-    //     return `${baseStr}-${offset}`; // siguiente boletas: -1, -2, etc.
-    //   }
-    //   return `${baseStr}-${offset + 1}`;
-    // }
+    function computeFolioCorrelativo(base, offset) {
+      const baseStr = String(base).trim();
+      return `${baseStr}-${offset + 1}`;
+    }
 
     let ticketsImpresos = 0;
     let ticketsConError = 0;
@@ -772,10 +752,10 @@ async function continuarConPago(metodoPago) {
     for (let i = 0; i < Number(cantidad); i++) {
       try {
         const codigoI = generarTokenNumerico();
-        // const folioActual = computeFolioCorrelativo(folioBase, i);
+        const folioActual = computeFolioCorrelativo(folioBase, i);
 
         console.log(`\n🎫 TICKET ${i + 1}/${cantidad}:`, {
-          folio: folioBase,
+          folio: folioActual,
           codigo: codigoI,
           iteracion: i,
         });
@@ -811,7 +791,7 @@ async function continuarConPago(metodoPago) {
           tipo,
           valor: precioFinal,
           qrBase64: qrBase64I,
-          folio: folioBase,
+          folio: folioActual,
           cantidad: 1,
         });
 

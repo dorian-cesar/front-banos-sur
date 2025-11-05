@@ -254,13 +254,13 @@ async function imprimirTicket({
       );
     }
 
+    function computeFolioCorrelativo(base, offset) {
+      const baseStr = String(base).trim();
+      return `${baseStr}-${offset + 1}`;
+    }
+
     // --- Generar e imprimir cada boleta ---
     for (let i = 0; i < cantidadBoletas; i++) {
-      function computeFolioCorrelativo(base, offset) {
-        const baseStr = String(base).trim();
-        return `${baseStr}-${offset + 1}`;
-      }
-
       // ✅ Cada boleta tiene un folio diferente
       const folioActual = computeFolioCorrelativo(folioBase, i);
 

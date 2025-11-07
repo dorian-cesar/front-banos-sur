@@ -146,7 +146,7 @@ async function imprimirTicket({
   valor,
   qrBase64,
   folio,
-  cantidad,
+  cantidad = 1,
 }) {
   try {
     console.log("🟢 Iniciando proceso de impresión de ticket");
@@ -161,107 +161,29 @@ async function imprimirTicket({
     });
 
     if (!Codigo || !tipo) throw new Error("Campos requeridos faltantes");
+    if (!folio) throw new Error("Folio es requerido para la impresión");
 
-    // ✅ Limpiar tipo (para evitar problemas con ñ, tildes o espacios)
-    const tipoLimpio = tipo
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/ñ/g, "n")
-      .replace(/Ñ/g, "N")
-      .replace(/\s+/g, "_")
-      .toLowerCase();
-
-    let folioBase = folio || null;
-    let cantidadBoletas = Number(cantidad) || 1;
+    const cantidadBoletas = Number(cantidad) || 1;
     const esLote = cantidadBoletas > 1;
-    let esFicticia = false;
 
-    // --- Obtener folio desde la API real ---
-    if (!folioBase) {
-      try {
-        console.log(
-          esLote
-            ? "📦 Generando lote de boletas..."
-            : "🧾 Generando boleta individual..."
-        );
-
-        const endpoint = esLote
-          ? "https://backend-banios.dev-wit.com/api/boletas/enviar-lote"
-          : "https://backend-banios.dev-wit.com/api/boletas/enviar";
-
-        const bodyData = esLote
-          ? {
-              nombre: tipoLimpio,
-              precio: Number(valor) || 0,
-              cantidad: cantidadBoletas,
-              monto_total: Number(valor) * cantidadBoletas,
-            }
-          : {
-              nombre: tipoLimpio,
-              precio: Number(valor) || 0,
-            };
-
-        // ✅ Obtener el token desde sessionStorage
-        const token = sessionStorage.getItem("authToken");
-        if (!token) {
-          throw new Error(
-            "No se encontró token de autenticación. Inicia sesión nuevamente."
-          );
-        }
-
-        const response = await fetch(endpoint, {
-          method: "POST",
-          /*    headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`, // ✅ Se incluye token
-          },
-      */
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-
-          body: JSON.stringify(bodyData),
-        });
-
-        const data = await response.json();
-        console.log("🔍 Respuesta de API:", data);
-
-        if (response.ok && data.folio) {
-          esFicticia = data.ficticia === true;
-
-          // 🔹 Mantener formato original del folio
-          folioBase = data.folio.toString();
-          cantidadBoletas = data.cantidad || cantidadBoletas;
-
-          console.log(
-            `✅ Folio base asignado: ${folioBase} | Ficticia: ${
-              esFicticia ? "Sí" : "No"
-            } | cantidad: ${cantidadBoletas}`
-          );
-        } else {
-          console.warn("⚠️ API devolvió error:", data.error || "desconocido");
-        }
-      } catch (apiErr) {
-        console.warn(
-          "❌ Error al conectar con la API de boletas:",
-          apiErr.message
-        );
-      }
-    } else {
-      console.log(
-        `📄 Usando folio base proporcionado manualmente: ${folioBase}`
-      );
-    }
+    console.log(
+      esLote
+        ? `📦 Imprimiendo lote de ${cantidadBoletas} boletas con folio base: ${folio}`
+        : `🧾 Imprimiendo boleta individual con folio: ${folio}`
+    );
 
     // --- Generar e imprimir cada boleta ---
     for (let i = 0; i < cantidadBoletas; i++) {
       // ✅ Cada ticket tiene un código único
       const codigoUnico = esLote ? generarTokenNumerico() : Codigo;
+
+      // ✅ Para lotes, generar folio correlativo (folioBase-1, folioBase-2, etc.)
+      const folioActual = esLote ? `${folio}-${i + 1}` : folio;
+
       console.log(
         `🧾 Ticket ${
           i + 1
-        }/${cantidadBoletas} → Ticket ${codigoUnico} | Folio ${folioBase}`
+        }/${cantidadBoletas} → Código: ${codigoUnico} | Folio: ${folioActual}`
       );
 
       const { PDFDocument, StandardFonts } = PDFLib;
@@ -326,7 +248,7 @@ async function imprimirTicket({
       // --- Detalle ---
       const detalle = [
         "---------------------------------------------",
-        `Nº boleta : ${folioBase}`,
+        `Nº boleta : ${folioActual}`,
         `Fecha : ${fechaFormateada}`,
         `Hora  : ${horaServidor}`,
         `Tipo  : ${tipo}`,
@@ -354,11 +276,10 @@ async function imprimirTicket({
       const responsePrint = await fetch("http://localhost:3000/api/imprimir", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-
         body: JSON.stringify({
           pdfData: pdfBase64,
           printer: "POS58",
-          filename: `ticket-${codigoUnico}-${folioBase}.pdf`,
+          filename: `ticket-${codigoUnico}-${folioActual}.pdf`,
         }),
       });
 
@@ -369,7 +290,7 @@ async function imprimirTicket({
       console.log(
         `✅ Ticket ${
           i + 1
-        }/${cantidadBoletas} (Folio ${folioBase}) impreso correctamente`
+        }/${cantidadBoletas} (Folio ${folioActual}) impreso correctamente`
       );
 
       // --- ⏸ Pausa para corte manual antes del siguiente ---
@@ -390,6 +311,7 @@ async function imprimirTicket({
     console.log("🎉 Todos los tickets del lote fueron impresos correctamente");
   } catch (error) {
     console.error("🛑 Error en imprimirTicket:", error.message);
+    throw error; // Re-lanzar el error para que la función llamadora lo maneje
   }
 }
 
@@ -465,6 +387,46 @@ async function continuarConPago(metodoPago) {
   }
   const id_usuario = jwtPayload.id;
 
+  // 🔹 Función para obtener folio base individual
+  async function obtenerFolioBaseIndividual() {
+    console.log(`📡 Solicitando folio base individual para ${tipo}`);
+    try {
+      const resFolio = await fetch(
+        "https://backend-banios.dev-wit.com/api/boletas/enviar",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nombre: tipo,
+            precio: Number(precioFinal) || 0,
+          }),
+        }
+      );
+      const folioData = await resFolio.json();
+      console.log("🔍 Respuesta folio individual:", folioData);
+
+      if (!resFolio.ok || !folioData?.folio) {
+        throw new Error(
+          folioData?.error || "No se recibió folio base individual"
+        );
+      }
+
+      const folioBase = folioData.folio.toString();
+      const ficticia = folioData.ficticia === true;
+
+      console.log(
+        `✅ Folio base individual obtenido: ${folioBase} | Ficticia: ${ficticia}`
+      );
+      return { folioBase, ficticia };
+    } catch (error) {
+      console.error("❌ Error al obtener folio base individual:", error);
+      throw error;
+    }
+  }
+
   // 🔹 Pago con TARJETA
   if (metodoPago === "TARJETA") {
     const monto = Math.round(Number(precioFinal) || 0);
@@ -473,9 +435,15 @@ async function continuarConPago(metodoPago) {
       showSpinner();
       console.log(`💳 INICIANDO PAGO CON TARJETA - Monto: $${monto}`);
 
+      // ✅ OBTENER FOLIO BASE para pago individual con tarjeta
+      const { folioBase, ficticia } = await obtenerFolioBaseIndividual();
+
       const res = await fetch("http://localhost:3000/api/payment", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ amount: monto, ticketNumber: Codigo }),
       });
 
@@ -542,6 +510,7 @@ async function continuarConPago(metodoPago) {
           last4Digits: data.last4Digits,
           cardType: data.cardType,
           cardBrand: data.cardBrand,
+          boleta: folioBase, // ✅ AGREGAR FOLIO BASE
         }),
       });
 
@@ -553,6 +522,8 @@ async function continuarConPago(metodoPago) {
         tipo,
         valor: precioFinal,
         qrBase64,
+        folio: folioBase, // ✅ AGREGAR FOLIO BASE
+        cantidad: 1,
       });
 
       try {
@@ -594,69 +565,95 @@ async function continuarConPago(metodoPago) {
 
   showSpinner();
 
-  // 🔹 Pago EFECTIVO
+  // 🔹 Pago EFECTIVO individual
   if (metodoPago === "EFECTIVO") {
-    // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
-    const { fecha: fechaI, hora: horaI } = obtenerFechaHoraChile();
-    const codigoI = generarTokenNumerico();
+    try {
+      // ✅ OBTENER FOLIO BASE para pago individual en efectivo
+      const { folioBase, ficticia } = await obtenerFolioBaseIndividual();
 
-    console.log(`💰 INICIANDO PAGO EFECTIVO - Nuevo código: ${codigoI}`);
+      // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
+      const { fecha: fechaI, hora: horaI } = obtenerFechaHoraChile();
+      const codigoI = generarTokenNumerico();
 
-    QR.makeCode(codigoI);
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const qrCanvas = contenedorQR.querySelector("canvas");
-    const qrBase64 = qrCanvas
-      ? qrCanvas.toDataURL("image/png").replace(/^data:image\/png;base64,/, "")
-      : "";
+      console.log(`💰 INICIANDO PAGO EFECTIVO - Nuevo código: ${codigoI}`);
 
-    console.log(`📤 Enviando a callApi - Código: ${codigoI}`);
-    await callApi({
-      Codigo: codigoI,
-      hora: horaI,
-      fecha: fechaI,
-      tipo,
-      valor: precioFinal,
-      medio_pago: metodoPago,
-    });
+      QR.makeCode(codigoI);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const qrCanvas = contenedorQR.querySelector("canvas");
+      const qrBase64 = qrCanvas
+        ? qrCanvas
+            .toDataURL("image/png")
+            .replace(/^data:image\/png;base64,/, "")
+        : "";
 
-    console.log(`📊 Registrando movimiento en caja - Código: ${codigoI}`);
-    await fetch("http://localhost:3000/api/caja/movimientos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        codigo: codigoI,
-        fecha: fechaI,
+      console.log(`📤 Enviando a callApi - Código: ${codigoI}`);
+      await callApi({
+        Codigo: codigoI,
         hora: horaI,
+        fecha: fechaI,
         tipo,
         valor: precioFinal,
-        metodoPago,
-        estado_caja,
-        id_usuario,
-        id_caja,
-      }),
-    });
+        medio_pago: metodoPago,
+      });
 
-    console.log(`🖨️ Iniciando impresión de ticket - Código: ${codigoI}`);
-    await imprimirTicket({
-      Codigo: codigoI,
-      hora: horaI,
-      fecha: fechaI,
-      tipo,
-      valor: precioFinal,
-      qrBase64,
-    });
+      console.log(`📊 Registrando movimiento en caja - Código: ${codigoI}`);
+      await fetch("http://localhost:3000/api/caja/movimientos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          codigo: codigoI,
+          fecha: fechaI,
+          hora: horaI,
+          tipo,
+          valor: precioFinal,
+          metodoPago,
+          estado_caja,
+          id_usuario,
+          id_caja,
+          boleta: folioBase, // ✅ AGREGAR FOLIO BASE
+        }),
+      });
 
-    try {
-      console.log(`👤 Registrando en ZKTeco - Código: ${codigoI}`);
-      addUser(codigoI);
-      setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
-    } catch (e) {
-      console.warn("ZKTeco: no se pudo registrar acceso para", codigoI, e);
+      console.log(`🖨️ Iniciando impresión de ticket - Código: ${codigoI}`);
+      await imprimirTicket({
+        Codigo: codigoI,
+        hora: horaI,
+        fecha: fechaI,
+        tipo,
+        valor: precioFinal,
+        qrBase64,
+        folio: folioBase, // ✅ AGREGAR FOLIO BASE
+        cantidad: 1,
+      });
+
+      try {
+        console.log(`👤 Registrando en ZKTeco - Código: ${codigoI}`);
+        addUser(codigoI);
+        setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
+      } catch (e) {
+        console.warn("ZKTeco: no se pudo registrar acceso para", codigoI, e);
+      }
+
+      console.log(`✅ PAGO EFECTIVO COMPLETADO - Código: ${codigoI}`);
+    } catch (error) {
+      console.error("❌ Error durante pago efectivo individual:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error al emitir boleta",
+        text: error.message || "No fue posible obtener folio del SII.",
+        customClass: {
+          popup: "alert-card",
+          title: "swal-font",
+          confirmButton: "my-confirm-btn",
+        },
+        buttonsStyling: false,
+      });
+      hideSpinner();
+      cerrarModalPago();
+      return;
     }
 
-    console.log(`✅ PAGO EFECTIVO COMPLETADO - Código: ${codigoI}`);
-
-    // 🔹 Pago EFECTIVO_LOTE
+    // 🔹 Pago EFECTIVO_LOTE (se mantiene con el endpoint de lote)
   } else if (metodoPago === "EFECTIVO_LOTE") {
     console.log(`📦 INICIANDO PAGO EFECTIVO LOTE`);
     const cantidad = await seleccionarCantidadTicketsAccesible();
@@ -685,7 +682,10 @@ async function continuarConPago(metodoPago) {
         "https://backend-banios.dev-wit.com/api/boletas/enviar-lote",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             nombre: tipo,
             precio: Number(precioFinal) || 0,
@@ -724,6 +724,7 @@ async function continuarConPago(metodoPago) {
       return;
     }
 
+    // ... (el resto del código de EFECTIVO_LOTE se mantiene igual)
     console.log(`📊 Registrando movimiento de lote en caja`);
     await fetch("http://localhost:3000/api/caja/movimientos", {
       method: "POST",
@@ -738,6 +739,7 @@ async function continuarConPago(metodoPago) {
         estado_caja,
         id_usuario,
         id_caja: id_aperturas_cierres,
+        boleta: folioBase,
       }),
     });
 

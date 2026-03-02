@@ -20,12 +20,34 @@ let botonActivo = null;
 
 let serviciosDisponibles = {};
 
+const processingCodes = new Set();
+
 // Fallbacks si la API no responde o no trae el tipo
 const PRECIO_FALLBACK = { BAÑO: 500, DUCHA: 3500 };
 const getPrecio = (tipo) => {
   const api = Number(serviciosDisponibles?.[tipo]?.precio);
-  return Number.isFinite(api) && api > 0 ? api : PRECIO_FALLBACK[tipo] ?? 0;
+  return Number.isFinite(api) && api > 0 ? api : (PRECIO_FALLBACK[tipo] ?? 0);
 };
+
+async function registerUserInZKTeco(Codigo) {
+  if (processingCodes.has(Codigo)) {
+    console.warn(
+      `ZKTeco: Código ${Codigo} ya está siendo procesado, ignorando duplicado`,
+    );
+    return;
+  }
+  processingCodes.add(Codigo);
+  try {
+    console.log(`Registrando en ZKTeco - Código: ${Codigo}`);
+    await addUser(Codigo);
+    await addUserAccessLevel(Codigo.substring(0, 6));
+    console.log(`ZKTeco: Código ${Codigo} registrado exitosamente`);
+  } catch (e) {
+    console.warn("ZKTeco: no se pudo registrar acceso para", Codigo, e);
+  } finally {
+    processingCodes.delete(Codigo);
+  }
+}
 
 async function cargarServicios() {
   try {
@@ -84,7 +106,7 @@ async function cargarServicios() {
 
         const estado_caja = localStorage.getItem("estado_caja");
         const id_aperturas_cierres = localStorage.getItem(
-          "id_aperturas_cierres"
+          "id_aperturas_cierres",
         );
 
         if (estado_caja !== "abierta") {
@@ -169,7 +191,7 @@ async function imprimirTicket({
     console.log(
       esLote
         ? `📦 Imprimiendo lote de ${cantidadBoletas} boletas con folio base: ${folio}`
-        : `🧾 Imprimiendo boleta individual con folio: ${folio}`
+        : `🧾 Imprimiendo boleta individual con folio: ${folio}`,
     );
 
     // --- Generar e imprimir cada boleta ---
@@ -183,7 +205,7 @@ async function imprimirTicket({
       console.log(
         `🧾 Ticket ${
           i + 1
-        }/${cantidadBoletas} → Código: ${codigoUnico} | Folio: ${folioActual}`
+        }/${cantidadBoletas} → Código: ${codigoUnico} | Folio: ${folioActual}`,
       );
 
       const { PDFDocument, StandardFonts } = PDFLib;
@@ -233,7 +255,7 @@ async function imprimirTicket({
       // --- QR ---
       if (qrBase64) {
         const qrImage = await pdfDoc.embedPng(
-          `data:image/png;base64,${qrBase64}`
+          `data:image/png;base64,${qrBase64}`,
         );
         const qrDims = qrImage.scale(0.5);
         page.drawImage(qrImage, {
@@ -290,7 +312,7 @@ async function imprimirTicket({
       console.log(
         `✅ Ticket ${
           i + 1
-        }/${cantidadBoletas} (Folio ${folioActual}) impreso correctamente`
+        }/${cantidadBoletas} (Folio ${folioActual}) impreso correctamente`,
       );
 
       // --- ⏸ Pausa para corte manual antes del siguiente ---
@@ -341,7 +363,7 @@ function obtenerFechaHoraChile() {
   };
 
   const partes = new Intl.DateTimeFormat("es-CL", opciones).formatToParts(
-    new Date()
+    new Date(),
   );
   const map = {};
   for (const p of partes) {
@@ -403,14 +425,14 @@ async function continuarConPago(metodoPago) {
             nombre: tipo,
             precio: Number(precioFinal) || 0,
           }),
-        }
+        },
       );
       const folioData = await resFolio.json();
       console.log("🔍 Respuesta folio individual:", folioData);
 
       if (!resFolio.ok || !folioData?.folio) {
         throw new Error(
-          folioData?.error || "No se recibió folio base individual"
+          folioData?.error || "No se recibió folio base individual",
         );
       }
 
@@ -418,7 +440,7 @@ async function continuarConPago(metodoPago) {
       const ficticia = folioData.ficticia === true;
 
       console.log(
-        `✅ Folio base individual obtenido: ${folioBase} | Ficticia: ${ficticia}`
+        `✅ Folio base individual obtenido: ${folioBase} | Ficticia: ${ficticia}`,
       );
       return { folioBase, ficticia };
     } catch (error) {
@@ -461,7 +483,7 @@ async function continuarConPago(metodoPago) {
         throw new Error(
           `Transacción fallida: ${
             data.responseMessage || "No aprobado por el POS"
-          }`
+          }`,
         );
       }
 
@@ -527,11 +549,12 @@ async function continuarConPago(metodoPago) {
       });
 
       try {
-        console.log(`👤 Registrando en ZKTeco - Código: ${Codigo}`);
-        addUser(Codigo);
-        setTimeout(() => addUserAccessLevel(Codigo.substring(0, 6)), 1000);
+        await registerUserInZKTeco(Codigo);
       } catch (e) {
-        console.warn("ZKTeco: no se pudo registrar acceso para", Codigo, e);
+        console.warn(
+          "ZKTeco: error inesperado agregando usuario con pago tarjeta",
+          e,
+        );
       }
 
       console.log(`✅ PAGO TARJETA COMPLETADO - Código: ${Codigo}`);
@@ -614,6 +637,15 @@ async function continuarConPago(metodoPago) {
         }),
       });
 
+      try {
+        await registerUserInZKTeco(codigoI);
+      } catch (e) {
+        console.warn(
+          "ZKTeco: error inesperado agregando usuario pago en efectivo",
+          e,
+        );
+      }
+
       console.log(`🖨️ Iniciando impresión de ticket - Código: ${codigoI}`);
       await imprimirTicket({
         Codigo: codigoI,
@@ -625,14 +657,6 @@ async function continuarConPago(metodoPago) {
         folio: folioBase, // ✅ AGREGAR FOLIO BASE
         cantidad: 1,
       });
-
-      try {
-        console.log(`👤 Registrando en ZKTeco - Código: ${codigoI}`);
-        addUser(codigoI);
-        setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
-      } catch (e) {
-        console.warn("ZKTeco: no se pudo registrar acceso para", codigoI, e);
-      }
 
       console.log(`✅ PAGO EFECTIVO COMPLETADO - Código: ${codigoI}`);
     } catch (error) {
@@ -692,7 +716,7 @@ async function continuarConPago(metodoPago) {
             cantidad: Number(cantidad),
             monto_total: (Number(precioFinal) || 0) * Number(cantidad),
           }),
-        }
+        },
       );
       const loteData = await resLote.json();
       console.log("🔍 Respuesta enviar-lote:", loteData);
@@ -704,7 +728,7 @@ async function continuarConPago(metodoPago) {
       ficticiaLote = loteData.ficticia === true;
 
       console.log(
-        `✅ Folio base obtenido: ${folioBase} | Ficticia: ${ficticiaLote}`
+        `✅ Folio base obtenido: ${folioBase} | Ficticia: ${ficticiaLote}`,
       );
     } catch (e) {
       console.error("❌ Error al solicitar enviar-lote:", e);
@@ -801,11 +825,12 @@ async function continuarConPago(metodoPago) {
 
         // Registrar en ZKTeco
         try {
-          console.log(`👤 Registrando en ZKTeco - Ticket ${i + 1}`);
-          addUser(codigoI);
-          setTimeout(() => addUserAccessLevel(codigoI.substring(0, 6)), 1000);
+          await registerUserInZKTeco(codigoI);
         } catch (e) {
-          console.warn(`⚠️ ZKTeco error en ticket ${i + 1}:`, e);
+          console.warn(
+            "ZKTeco: error inesperado agregando usuario con pago efectivo_lote",
+            e,
+          );
         }
 
         // Pausa para corte (excepto último ticket)
@@ -827,7 +852,7 @@ async function continuarConPago(metodoPago) {
     console.log(`❌ Tickets con error: ${ticketsConError}`);
     console.log(`🎯 Total solicitado: ${cantidad}`);
     console.log(
-      `📈 Eficiencia: ${((ticketsImpresos / cantidad) * 100).toFixed(1)}%`
+      `📈 Eficiencia: ${((ticketsImpresos / cantidad) * 100).toFixed(1)}%`,
     );
 
     if (typeof confirmarImpresionExitosa === "function") {
@@ -857,7 +882,7 @@ function parseJwt(token) {
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
+        .join(""),
     );
     return JSON.parse(jsonPayload);
   } catch (err) {
@@ -912,10 +937,10 @@ async function seleccionarCantidadTicketsAccesible() {
     },
     preConfirm: () => {
       const manual = Number(
-        Swal.getHtmlContainer().querySelector("#cantidadManual").value
+        Swal.getHtmlContainer().querySelector("#cantidadManual").value,
       );
       const selectedBtn = Swal.getHtmlContainer().querySelector(
-        ".cantidad-btn.selected"
+        ".cantidad-btn.selected",
       );
       const quick = selectedBtn ? Number(selectedBtn.dataset.value) : null;
 
@@ -1023,7 +1048,7 @@ function printQR() {
   // Obtener el código QR generado
   const codigoQR = document.getElementById("keycont").value;
   const tipoSeleccionado = document.querySelector(
-    'input[name="tipo"]:checked'
+    'input[name="tipo"]:checked',
   ).value;
 
   if (!codigoQR) {
@@ -1037,7 +1062,7 @@ function printQR() {
       null) != null
       ? `$${Number(
           serviciosDisponibles?.[tipoSeleccionado]?.precio ??
-            datosPendientes?.valor
+            datosPendientes?.valor,
         ).toLocaleString("es-CL")}`
       : "No definido";
 

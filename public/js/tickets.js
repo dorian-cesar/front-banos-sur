@@ -704,6 +704,7 @@ async function continuarConPago(metodoPago) {
     try {
       const resLote = await fetch(
         "https://backend-banios.dev-wit.com/api/boletas/enviar-lote",
+        // "http://localhost:4000/api/boletas/enviar-lote",
         {
           method: "POST",
           headers: {
@@ -1154,15 +1155,31 @@ async function addUserAccessLevel(token) {
   }
 }
 
+function showSpinnerPago() {
+  const el = document.getElementById("spinnerPago");
+  if (el) el.style.display = "flex";
+}
+
+function hideSpinnerPago() {
+  const el = document.getElementById("spinnerPago");
+  if (el) el.style.display = "none";
+}
+
 // Eventos para botones de pago
 document.getElementById("btnPagoEfectivo").addEventListener("click", () => {
-  continuarConPago("EFECTIVO");
+  document.getElementById("modalPago").style.display = "none";
+  showSpinnerPago();
+  continuarConPago("EFECTIVO").finally(() => hideSpinnerPago());
 });
 
 document.getElementById("btnPagoTarjeta").addEventListener("click", () => {
-  continuarConPago("TARJETA");
+  document.getElementById("modalPago").style.display = "none";
+  showSpinnerPago();
+  continuarConPago("TARJETA").finally(() => hideSpinnerPago());
 });
 
 document.getElementById("btnPagoEfectivoLote").addEventListener("click", () => {
-  continuarConPago("EFECTIVO_LOTE");
+  document.getElementById("modalPago").style.display = "none";
+  showSpinnerPago();
+  continuarConPago("EFECTIVO_LOTE").finally(() => hideSpinnerPago());
 });

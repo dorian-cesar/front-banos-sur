@@ -300,7 +300,7 @@ async function imprimirTicket({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pdfData: pdfBase64,
-          printer: "POS58",
+          printer: "EPSON TM-T88V Receipt",
           filename: `ticket-${codigoUnico}-${folioActual}.pdf`,
         }),
       });
@@ -316,13 +316,13 @@ async function imprimirTicket({
       );
 
       // --- ⏸ Pausa para corte manual antes del siguiente ---
-      if (
-        esLote &&
-        i + 1 < cantidadBoletas &&
-        typeof pausaParaCorte === "function"
-      ) {
-        await pausaParaCorte(i + 1, cantidadBoletas);
-      }
+      // if (
+      //   esLote &&
+      //   i + 1 < cantidadBoletas &&
+      //   typeof pausaParaCorte === "function"
+      // ) {
+      //   await pausaParaCorte(i + 1, cantidadBoletas);
+      // }
     }
 
     // --- ✅ Confirmación final ---
@@ -748,7 +748,6 @@ async function continuarConPago(metodoPago) {
       return;
     }
 
-    // ... (el resto del código de EFECTIVO_LOTE se mantiene igual)
     console.log(`📊 Registrando movimiento de lote en caja`);
     await fetch("http://localhost:3000/api/caja/movimientos", {
       method: "POST",
@@ -834,10 +833,10 @@ async function continuarConPago(metodoPago) {
         }
 
         // Pausa para corte (excepto último ticket)
-        if (i + 1 < Number(cantidad) && typeof pausaParaCorte === "function") {
-          console.log(`⏸️ Pausa para corte - Ticket ${i + 1}/${cantidad}`);
-          await pausaParaCorte(i + 1, Number(cantidad));
-        }
+        // if (i + 1 < Number(cantidad) && typeof pausaParaCorte === "function") {
+        //   console.log(`⏸️ Pausa para corte - Ticket ${i + 1}/${cantidad}`);
+        //   await pausaParaCorte(i + 1, Number(cantidad));
+        // }
 
         console.log(`✅ TICKET ${i + 1} COMPLETADO`);
       } catch (error) {

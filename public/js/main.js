@@ -784,7 +784,7 @@ async function reimprimirTicket({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         pdfData: pdfBase64,
-        printer: "EPSON TM-T88V Receipt",
+        printer: "POS58",
         filename: `reimpresion-${Codigo}-${Date.now()}.pdf`,
       }),
     });

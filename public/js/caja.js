@@ -633,7 +633,7 @@ $(document).ready(function () {
         contentType: "application/json",
         data: JSON.stringify({
           pdfData: pdfBase64,
-          printer: "EPSON TM-T88V Receipt",
+          printer: "POS58",
           filename: `cierre-${Date.now()}.pdf`,
         }),
       });
@@ -1196,7 +1196,7 @@ $(document).ready(function () {
         contentType: "application/json",
         data: JSON.stringify({
           pdfData: pdfBase64,
-          printer: "EPSON TM-T88V Receipt",
+          printer: "POS58",
           filename: `retiro-${datosImpresion.codigo}-${Date.now()}.pdf`,
         }),
       });

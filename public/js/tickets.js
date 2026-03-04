@@ -300,7 +300,7 @@ async function imprimirTicket({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pdfData: pdfBase64,
-          printer: "EPSON TM-T88V Receipt",
+          printer: "POS58",
           filename: `ticket-${codigoUnico}-${folioActual}.pdf`,
         }),
       });

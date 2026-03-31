@@ -257,7 +257,7 @@ async function imprimirTicket({
         const qrImage = await pdfDoc.embedPng(
           `data:image/png;base64,${qrBase64}`,
         );
-        const qrDims = qrImage.scale(0.5);
+        const qrDims = qrImage.scale(0.3);
         page.drawImage(qrImage, {
           x: (210 - qrDims.width) / 2,
           y: y - qrDims.height,

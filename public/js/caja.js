@@ -1016,18 +1016,20 @@ $(document).ready(function () {
             // Definir roles permitidos según el tipo de operación
             let rolesPermitidos = [];
 
-            if (tipoOperacion === "cierre") {
-              // Para cierre de caja: admin, supervisor, recaudador, tesorero
-              rolesPermitidos = [
-                "admin",
-                "supervisor",
-                "recaudador",
-                "tesorero",
-              ];
-            } else if (tipoOperacion === "retiro") {
-              // Para retiro de efectivo: admin, recaudador, tesorero (excluye supervisor)
-              rolesPermitidos = ["admin", "recaudador", "tesorero"];
-            }
+            // if (tipoOperacion === "cierre") {
+            //   // Para cierre de caja: admin, supervisor, recaudador, tesorero
+            //   rolesPermitidos = [
+            //     "admin",
+            //     "supervisor",
+            //     "recaudador",
+            //     "tesorero",
+            //   ];
+            // } else if (tipoOperacion === "retiro") {
+            //   // Para retiro de efectivo: admin, recaudador, tesorero (excluye supervisor)
+            //   rolesPermitidos = ["admin", "recaudador", "tesorero"];
+            // }
+
+            rolesPermitidos = ["admin", "supervisor", "recaudador", "tesorero"];
 
             const tienePermiso = rolesPermitidos.includes(rolUsuario);
 

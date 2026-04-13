@@ -514,26 +514,22 @@ async function continuarConPago(metodoPago) {
       await callApi({ Codigo, hora, fecha, tipo, valor: precioFinal });
 
       console.log(`📊 Registrando movimiento en caja - Código: ${Codigo}`);
-      await fetch("http://localhost:3000/api/caja/movimientos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          codigo: Codigo,
-          fecha,
-          hora,
-          tipo,
-          valor: precioFinal,
-          metodoPago,
-          estado_caja,
-          id_usuario,
-          id_caja,
-          operationNumber: data.operationNumber,
-          authorizationCode: data.authorizationCode,
-          last4Digits: data.last4Digits,
-          cardType: data.cardType,
-          cardBrand: data.cardBrand,
-          boleta: folioBase, // ✅ AGREGAR FOLIO BASE
-        }),
+      await registrarMovimientoCaja({
+        codigo: Codigo,
+        fecha,
+        hora,
+        tipo,
+        valor: precioFinal,
+        metodoPago,
+        estado_caja,
+        id_usuario,
+        id_caja,
+        operationNumber: data.operationNumber,
+        authorizationCode: data.authorizationCode,
+        last4Digits: data.last4Digits,
+        cardType: data.cardType,
+        cardBrand: data.cardBrand,
+        boleta: folioBase,
       });
 
       console.log(`🖨️ Iniciando impresión de ticket - Código: ${Codigo}`);
@@ -620,21 +616,17 @@ async function continuarConPago(metodoPago) {
       });
 
       console.log(`📊 Registrando movimiento en caja - Código: ${codigoI}`);
-      await fetch("http://localhost:3000/api/caja/movimientos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          codigo: codigoI,
-          fecha: fechaI,
-          hora: horaI,
-          tipo,
-          valor: precioFinal,
-          metodoPago,
-          estado_caja,
-          id_usuario,
-          id_caja,
-          boleta: folioBase, // ✅ AGREGAR FOLIO BASE
-        }),
+      await registrarMovimientoCaja({
+        codigo: codigoI,
+        fecha: fechaI,
+        hora: horaI,
+        tipo,
+        valor: precioFinal,
+        metodoPago,
+        estado_caja,
+        id_usuario,
+        id_caja,
+        boleta: folioBase,
       });
 
       try {
@@ -750,21 +742,17 @@ async function continuarConPago(metodoPago) {
     }
 
     console.log(`📊 Registrando movimiento de lote en caja`);
-    await fetch("http://localhost:3000/api/caja/movimientos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        codigo: `LOTE-${Date.now()}`,
-        fecha: fechaI,
-        hora: horaI,
-        tipo,
-        valor: (Number(precioFinal) || 0) * Number(cantidad),
-        metodoPago: "EFECTIVO",
-        estado_caja,
-        id_usuario,
-        id_caja: id_aperturas_cierres,
-        boleta: folioBase,
-      }),
+    await registrarMovimientoCaja({
+      codigo: `LOTE-${Date.now()}`,
+      fecha: fechaI,
+      hora: horaI,
+      tipo,
+      valor: (Number(precioFinal) || 0) * Number(cantidad),
+      metodoPago: "EFECTIVO",
+      estado_caja,
+      id_usuario,
+      id_caja: id_aperturas_cierres,
+      boleta: folioBase,
     });
 
     function computeFolioCorrelativo(base, offset) {
@@ -997,6 +985,35 @@ function generarTokenNumerico() {
 
 function escribirTexto() {
   contenedorContador.innerHTML = "texto";
+}
+
+async function registrarMovimientoCaja(datos) {
+  const id_caja = localStorage.getItem("id_aperturas_cierres");
+  const payload = {
+    ...datos,
+    id_caja: datos.id_caja ?? id_caja ?? null,
+  };
+
+  console.log("📦 Enviando movimiento a caja:", payload);
+
+  try {
+    const response = await fetch("http://localhost:3000/api/caja/movimientos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error HTTP ${response.status}`);
+    }
+
+    const result = await response.json().catch(() => ({}));
+    console.log("✅ Movimiento registrado:", result);
+    return result;
+  } catch (error) {
+    console.error("❌ Error al registrar movimiento en caja:", error);
+    return null; // nunca rompe el flujo
+  }
 }
 
 async function callApi(datos) {

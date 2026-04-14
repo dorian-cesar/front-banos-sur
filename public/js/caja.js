@@ -569,6 +569,36 @@ $(document).ready(function () {
       });
   });
 
+  function obtenerDatosCierreDesdeUI(nombreUsuarioCierre) {
+    const getNumber = (selector) => {
+      const text = $(selector).text().replace("$", "").trim();
+      return parseFloat(text.replace(/\./g, "").replace(",", ".")) || 0;
+    };
+
+    const usuario = JSON.parse(sessionStorage.getItem("usuario") || "{}");
+
+    const ahora = new Date();
+    const fecha = ahora.toLocaleDateString("es-CL");
+    const hora = ahora.toLocaleTimeString("es-CL");
+
+    return {
+      nombre_caja: localStorage.getItem("numero_caja") || "Caja",
+      nombre_cajero: usuario.username || "Cajero",
+      nombre_usuario_cierre: nombreUsuarioCierre,
+
+      fecha_cierre: fecha,
+      hora_cierre: hora,
+
+      monto_inicial: getNumber("#fondoInicial"),
+      total_efectivo: getNumber("#totalEfectivo"),
+      total_tarjeta: getNumber("#totalTarjeta"),
+      total_retiros: $("#totalRetirado").length
+        ? getNumber("#totalRetirado")
+        : 0,
+      balance_final: getNumber("#balanceActual"),
+    };
+  }
+
   // Función para realizar el cierre de caja después de la autenticación
   async function imprimirCopiaCierre(datosImpresion) {
     try {
@@ -730,7 +760,8 @@ $(document).ready(function () {
             if (data.success) {
               const payload = data.data;
               const { PDFDocument, StandardFonts } = PDFLib;
-              await imprimirCopiaCierre(payload.datosImpresion);
+              const datosFrontend = obtenerDatosCierreDesdeUI(nombreCajero);
+              await imprimirCopiaCierre(datosFrontend);
 
               // 🔹 Limpiar estado de la caja
               localStorage.removeItem("id_aperturas_cierres");

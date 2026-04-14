@@ -624,7 +624,19 @@ $(document).ready(function () {
       });
 
       const pdfBytes = await pdfDoc.save();
-      const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
+      function uint8ToBase64(u8Arr) {
+        let binary = "";
+        const chunkSize = 0x8000; // evitar overflow
+
+        for (let i = 0; i < u8Arr.length; i += chunkSize) {
+          const chunk = u8Arr.subarray(i, i + chunkSize);
+          binary += String.fromCharCode.apply(null, chunk);
+        }
+
+        return btoa(binary);
+      }
+
+      const pdfBase64 = uint8ToBase64(pdfBytes);
 
       // Enviar a la API de impresión
       const response = await $.ajax({
@@ -1199,7 +1211,19 @@ $(document).ready(function () {
 
       // 2. Guardar PDF en base64
       const pdfBytes = await pdfDoc.save();
-      const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
+      function uint8ToBase64(u8Arr) {
+        let binary = "";
+        const chunkSize = 0x8000; // evitar overflow
+
+        for (let i = 0; i < u8Arr.length; i += chunkSize) {
+          const chunk = u8Arr.subarray(i, i + chunkSize);
+          binary += String.fromCharCode.apply(null, chunk);
+        }
+
+        return btoa(binary);
+      }
+
+      const pdfBase64 = uint8ToBase64(pdfBytes);
 
       // 3. Enviar a la API de impresión
       const response = await $.ajax({

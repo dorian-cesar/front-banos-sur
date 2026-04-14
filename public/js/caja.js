@@ -918,14 +918,14 @@ $(document).ready(function () {
       return;
     }
 
-    if (monto > balanceActual) {
-      Swal.fire({
-        icon: "error",
-        title: "Fondos insuficientes",
-        text: `No puede retirar más del efectivo disponible. Disponible: $${balanceActual.toLocaleString("es-CL")}, Intenta retirar: $${monto.toLocaleString("es-CL")}`,
-      });
-      return;
-    }
+    // if (monto > balanceActual) {
+    //   Swal.fire({
+    //     icon: "error",
+    //     title: "Fondos insuficientes",
+    //     text: `No puede retirar más del efectivo disponible. Disponible: $${balanceActual.toLocaleString("es-CL")}, Intenta retirar: $${monto.toLocaleString("es-CL")}`,
+    //   });
+    //   return;
+    // }
 
     // Confirmación final con SweetAlert
     Swal.fire({
@@ -1002,20 +1002,32 @@ $(document).ready(function () {
             const rolUsuario = response.user.role.toLowerCase();
 
             // Definir roles permitidos según el tipo de operación
-            let rolesPermitidos = [];
+            // let rolesPermitidos = [];
 
-            if (tipoOperacion === "cierre") {
-              // Para cierre de caja: admin, supervisor, recaudador, tesorero
-              rolesPermitidos = [
-                "admin",
-                "supervisor",
-                "recaudador",
-                "tesorero",
-              ];
-            } else if (tipoOperacion === "retiro") {
-              // Para retiro de efectivo: admin, recaudador, tesorero (excluye supervisor)
-              rolesPermitidos = ["admin", "recaudador", "tesorero"];
-            }
+            // if (tipoOperacion === "cierre") {
+            //   // Para cierre de caja: admin, supervisor, recaudador, tesorero
+            //   rolesPermitidos = [
+            //     "admin",
+            //     "supervisor",
+            //     "recaudador",
+            //     "tesorero",
+            //   ];
+            // } else if (tipoOperacion === "retiro") {
+            //   // Para retiro de efectivo: admin, recaudador, tesorero (excluye supervisor)
+            //   rolesPermitidos = [
+            //     "admin",
+            //     "recaudador",
+            //     "supervisor",
+            //     "tesorero",
+            //   ];
+            // }
+
+            let rolesPermitidos = [
+              "admin",
+              "recaudador",
+              "supervisor",
+              "tesorero",
+            ];
 
             const tienePermiso = rolesPermitidos.includes(rolUsuario);
 

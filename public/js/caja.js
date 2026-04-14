@@ -570,6 +570,36 @@ $(document).ready(function () {
       });
   });
 
+  function obtenerDatosCierreDesdeUI(nombreUsuarioCierre) {
+    const getNumber = (selector) => {
+      const text = $(selector).text().replace("$", "").trim();
+      return parseFloat(text.replace(/\./g, "").replace(",", ".")) || 0;
+    };
+
+    const usuario = JSON.parse(sessionStorage.getItem("usuario") || "{}");
+
+    const ahora = new Date();
+    const fecha = ahora.toLocaleDateString("es-CL");
+    const hora = ahora.toLocaleTimeString("es-CL");
+
+    return {
+      nombre_caja: localStorage.getItem("numero_caja") || "Caja",
+      nombre_cajero: usuario.username || "Cajero",
+      nombre_usuario_cierre: nombreUsuarioCierre,
+
+      fecha_cierre: fecha,
+      hora_cierre: hora,
+
+      monto_inicial: getNumber("#fondoInicial"),
+      total_efectivo: getNumber("#totalEfectivo"),
+      total_tarjeta: getNumber("#totalTarjeta"),
+      total_retiros: $("#totalRetirado").length
+        ? getNumber("#totalRetirado")
+        : 0,
+      balance_final: getNumber("#balanceActual"),
+    };
+  }
+
   // Función para realizar el cierre de caja después de la autenticación
   async function imprimirCopiaCierre(datosImpresion) {
     try {
@@ -637,7 +667,19 @@ $(document).ready(function () {
       });
 
       const pdfBytes = await pdfDoc.save();
-      const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
+      function uint8ToBase64(u8Arr) {
+        let binary = "";
+        const chunkSize = 0x8000; // evitar overflow
+
+        for (let i = 0; i < u8Arr.length; i += chunkSize) {
+          const chunk = u8Arr.subarray(i, i + chunkSize);
+          binary += String.fromCharCode.apply(null, chunk);
+        }
+
+        return btoa(binary);
+      }
+
+      const pdfBase64 = uint8ToBase64(pdfBytes);
 
       // Enviar a la API de impresión
       const response = await $.ajax({
@@ -731,9 +773,10 @@ $(document).ready(function () {
             if (data.success) {
               const payload = data.data;
               const { PDFDocument, StandardFonts } = PDFLib;
-              await imprimirCopiaCierre(payload.datosImpresion);
+              const datosFrontend = obtenerDatosCierreDesdeUI(nombreCajero);
+              await imprimirCopiaCierre(datosFrontend);
 
-              // 🔹 Limpiar estado de la caja
+              // 🔹 Limpiar estado de la caja|
               localStorage.removeItem("id_aperturas_cierres");
               localStorage.removeItem("estado_caja");
               localStorage.removeItem("numero_caja");
@@ -1202,7 +1245,19 @@ $(document).ready(function () {
 
       // 2. Guardar PDF en base64
       const pdfBytes = await pdfDoc.save();
-      const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
+      function uint8ToBase64(u8Arr) {
+        let binary = "";
+        const chunkSize = 0x8000; // evitar overflow
+
+        for (let i = 0; i < u8Arr.length; i += chunkSize) {
+          const chunk = u8Arr.subarray(i, i + chunkSize);
+          binary += String.fromCharCode.apply(null, chunk);
+        }
+
+        return btoa(binary);
+      }
+
+      const pdfBase64 = uint8ToBase64(pdfBytes);
 
       // 3. Enviar a la API de impresión
       const response = await $.ajax({

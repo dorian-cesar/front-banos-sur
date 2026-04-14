@@ -931,14 +931,14 @@ $(document).ready(function () {
       return;
     }
 
-    if (monto > balanceActual) {
-      Swal.fire({
-        icon: "error",
-        title: "Fondos insuficientes",
-        text: `No puede retirar más del efectivo disponible. Disponible: $${balanceActual.toLocaleString("es-CL")}, Intenta retirar: $${monto.toLocaleString("es-CL")}`,
-      });
-      return;
-    }
+    // if (monto > balanceActual) {
+    //   Swal.fire({
+    //     icon: "error",
+    //     title: "Fondos insuficientes",
+    //     text: `No puede retirar más del efectivo disponible. Disponible: $${balanceActual.toLocaleString("es-CL")}, Intenta retirar: $${monto.toLocaleString("es-CL")}`,
+    //   });
+    //   return;
+    // }
 
     // Confirmación final con SweetAlert
     Swal.fire({

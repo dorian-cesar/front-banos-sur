@@ -10,6 +10,8 @@ QR.makeCode("wit");
 
 const urlBase = "https://andenes.terminal-calama.com";
 const url = urlBase + "/TerminalCalama/PHP/Restroom/save.php";
+const urlMovimientos =
+  urlBase + "/TerminalCalama/PHP/Restroom/saveCajaBanoPoniente.php";
 
 // console.log(urlBase);
 
@@ -152,6 +154,11 @@ async function cargarServicios() {
         document.getElementById("modalPago").style.display = "flex";
       });
     });
+
+    localStorage.setItem(
+      "serviciosDisponibles",
+      JSON.stringify(serviciosDisponibles),
+    );
 
     console.log("Servicios activos cargados:", serviciosDisponibles);
   } catch (err) {
@@ -741,20 +748,6 @@ async function continuarConPago(metodoPago) {
       return;
     }
 
-    console.log(`📊 Registrando movimiento de lote en caja`);
-    await registrarMovimientoCaja({
-      codigo: `LOTE-${Date.now()}`,
-      fecha: fechaI,
-      hora: horaI,
-      tipo,
-      valor: (Number(precioFinal) || 0) * Number(cantidad),
-      metodoPago: "EFECTIVO",
-      estado_caja,
-      id_usuario,
-      id_caja: id_aperturas_cierres,
-      boleta: folioBase,
-    });
-
     function computeFolioCorrelativo(base, offset) {
       const baseStr = String(base).trim();
       return `${baseStr}-${offset + 1}`;
@@ -783,6 +776,20 @@ async function continuarConPago(metodoPago) {
               .toDataURL("image/png")
               .replace(/^data:image\/png;base64,/, "")
           : "";
+
+        console.log(`📊 Registrando movimiento de lote en caja`);
+        await registrarMovimientoCaja({
+          codigo: codigoI,
+          fecha: fechaI,
+          hora: horaI,
+          tipo,
+          valor: precioFinal,
+          metodoPago: "EFECTIVO-LOTE",
+          estado_caja,
+          id_usuario,
+          id_caja: id_aperturas_cierres,
+          boleta: folioActual,
+        });
 
         // Registrar en API
         console.log(`📤 Enviando a callApi - Ticket ${i + 1}`);
@@ -988,31 +995,50 @@ function escribirTexto() {
 }
 
 async function registrarMovimientoCaja(datos) {
-  const id_caja = localStorage.getItem("id_aperturas_cierres");
-  const payload = {
-    ...datos,
-    id_caja: datos.id_caja ?? id_caja ?? null,
-  };
-
-  console.log("📦 Enviando movimiento a caja:", payload);
-
   try {
-    const response = await fetch("http://localhost:3000/api/caja/movimientos", {
+    const resCaja = await fetch("http://localhost:3000/api/numero-caja");
+    const { numero_caja } = await resCaja.json();
+
+    const { codigo, fecha, hora, tipo, valor, metodoPago, id_usuario, boleta } =
+      datos;
+
+    const id_aperturas_cierres = localStorage.getItem("id_aperturas_cierres");
+    const serviciosDisponibles =
+      JSON.parse(localStorage.getItem("serviciosDisponibles")) || {};
+
+    const servicio = Object.values(serviciosDisponibles).find(
+      (s) => s.nombre.toLowerCase() === tipo.toLowerCase(),
+    );
+
+    const id_servicio = servicio ? servicio.id : null;
+
+    if (!id_servicio) {
+      console.warn("No se encontró id_servicio para tipo:", tipo);
+    }
+
+    const payload = {
+      codigo,
+      fecha,
+      hora,
+      id_servicio,
+      monto: valor,
+      medio_pago: metodoPago,
+      numero_caja,
+      id_usuario,
+      id_aperturas_cierres,
+      boleta,
+    };
+
+    await fetch(urlMovimientos, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
-      throw new Error(`Error HTTP ${response.status}`);
-    }
-
-    const result = await response.json().catch(() => ({}));
-    console.log("✅ Movimiento registrado:", result);
-    return result;
+    return { success: true };
   } catch (error) {
-    console.error("❌ Error al registrar movimiento en caja:", error);
-    return null; // nunca rompe el flujo
+    console.error("Error registrarMovimientoCaja:", error);
+    return { success: false };
   }
 }
 

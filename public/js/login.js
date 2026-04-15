@@ -144,9 +144,36 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function recargarYLimpiarStorage() {
-  localStorage.clear();
-  sessionStorage.clear();
-  window.location.replace(window.location.href);
+  try {
+    // Limpiar storage
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Mostrar mensaje
+    const mensaje = document.createElement("div");
+    mensaje.textContent = "🔄 Recargando página...";
+    mensaje.style.position = "fixed";
+    mensaje.style.bottom = "70px";
+    mensaje.style.left = "60px";
+    mensaje.style.backgroundColor = "#ff9800";
+    mensaje.style.color = "white";
+    mensaje.style.padding = "8px 16px";
+    mensaje.style.borderRadius = "20px";
+    mensaje.style.fontSize = "13px";
+    mensaje.style.zIndex = "1002";
+    mensaje.style.fontWeight = "bold";
+    mensaje.style.boxShadow = "0 2px 10px rgba(0,0,0,0.2)";
+    mensaje.style.whiteSpace = "nowrap";
+    document.body.appendChild(mensaje);
+
+    // Recargar después de que se vea el mensaje
+    setTimeout(() => {
+      window.location.replace(window.location.href);
+    }, 500);
+  } catch (error) {
+    console.error("Error:", error);
+    window.location.replace(window.location.href);
+  }
 }
 
 // Función para cerrar sesión

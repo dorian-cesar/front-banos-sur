@@ -143,6 +143,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+function recargarYLimpiarStorage() {
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.replace(window.location.href);
+}
+
 // Función para cerrar sesión
 function cerrarSesion() {
   try {

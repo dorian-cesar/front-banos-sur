@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -7,8 +7,11 @@
     <link href="/css/login.css" rel="stylesheet" />
     <link href="/css/teclado.css" rel="stylesheet" />
     <!-- simple keyboard -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/simple-keyboard/3.8.67/css/index.min.css">    
-    <script src="/js/login.js" defer></script>  
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/simple-keyboard/3.8.67/css/index.min.css"
+    />
+    <script src="/js/login.js" defer></script>
     <style>
       /* Asegurar que el teclado aparezca sobre el modal */
       #tecladoContainer {
@@ -88,7 +91,11 @@
   <body>
     <header>
       <nav>
-        <img src="/images/LOGOTIPO_PB_NARANJO_NORMA@2x.png" alt="Logo Pullman" class="logo-pullman" />
+        <img
+          src="/images/LOGOTIPO_PB_NARANJO_NORMA@2x.png"
+          alt="Logo Pullman"
+          class="logo-pullman"
+        />
         <h1>SUITE SERVICIOS PULLMAN</h1>
         <img src="/images/wit@2x.png" alt="Logo Wit" class="logo-wit" />
       </nav>
@@ -98,15 +105,31 @@
       <form id="loginForm" class="login-form">
         <h2 class="login-title">Iniciar Sesión</h2>
         <div class="form-group">
-          <label>Usuario</label>          
-          <input type="email" id="email" required class="user-input usar-teclado" />
+          <label>Usuario</label>
+          <input
+            type="email"
+            id="email"
+            required
+            class="user-input usar-teclado"
+          />
         </div>
 
         <div class="form-group">
           <label>Contraseña</label>
           <div class="password-wrapper">
-            <input type="password" id="password" required class="user-input usar-teclado" />          
-            <button type="button" id="togglePassword" class="toggle-password" aria-label="Mostrar/Ocultar contraseña" aria-pressed="false">
+            <input
+              type="password"
+              id="password"
+              required
+              class="user-input usar-teclado"
+            />
+            <button
+              type="button"
+              id="togglePassword"
+              class="toggle-password"
+              aria-label="Mostrar/Ocultar contraseña"
+              aria-pressed="false"
+            >
               <svg id="iconEye" viewBox="0 0 24 24" aria-hidden="true">
                 <!-- OJO ABIERTO -->
                 <g class="eye-open">
@@ -115,8 +138,12 @@
                 </g>
                 <!-- OJO CERRADO (TACHADO) -->
                 <g class="eye-closed">
-                  <path d="M9.9 4.24A10.94 10.94 0 0112 5c7 0 11 7 11 7a22.05 22.05 0 01-5.08 5.96"></path>
-                  <path d="M17.94 17.94A10.94 10.94 0 0112 19c-7 0-11-7-11-7a22.05 22.05 0 015.08-5.96"></path>
+                  <path
+                    d="M9.9 4.24A10.94 10.94 0 0112 5c7 0 11 7 11 7a22.05 22.05 0 01-5.08 5.96"
+                  ></path>
+                  <path
+                    d="M17.94 17.94A10.94 10.94 0 0112 19c-7 0-11-7-11-7a22.05 22.05 0 015.08-5.96"
+                  ></path>
                   <path d="M1 1L23 23"></path>
                   <path d="M14.12 14.12A3 3 0 119.88 9.88"></path>
                 </g>
@@ -133,17 +160,25 @@
           <a href="#" id="olvidoContrasena">¿Olvidaste tu contraseña?</a>
         </div>
       </form>
-    </main> 
+    </main>
 
     <!-- Modal para recuperar contraseña -->
     <div id="modalRecuperar" class="modal">
       <div class="modal-content">
         <span class="close">&times;</span>
         <h2>Recuperar Contraseña</h2>
-        <p>Te enviaremos un correo con un enlace para reestablecer tu contraseña.</p>
+        <p>
+          Te enviaremos un correo con un enlace para reestablecer tu contraseña.
+        </p>
         <form id="formRecuperar">
           <div class="form-group">
-            <input type="email" id="emailRecuperar" required class="user-input usar-teclado" placeholder="Correo electrónico" />
+            <input
+              type="email"
+              id="emailRecuperar"
+              required
+              class="user-input usar-teclado"
+              placeholder="Correo electrónico"
+            />
           </div>
           <div class="text-center">
             <button type="submit" class="ingresar-button">Enviar</button>
@@ -152,44 +187,116 @@
       </div>
     </div>
 
-    <button onclick="apagarSistema()" class="btn btn-danger" style="position:fixed; bottom:10px; left:10px; z-index:1000;">Apagar</button>  
-    
-    <div id="tecladoContainer" style="display: none; position: fixed; bottom: 0; width: 100%; z-index: 1001; background: #fff; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+    <div
+      style="
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        z-index: 1000;
+        display: flex;
+        gap: 10px;
+      "
+    >
+      <button
+        onclick="apagarSistema()"
+        class="btn btn-danger"
+        style="
+          background: #dc3545;
+          color: white;
+          border: none;
+          margin: 4px;
+          padding: 4px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+        "
+      >
+        Apagar
+      </button>
+      <button
+        onclick="recargarYLimpiarStorage()"
+        class="btn-reload"
+        style="
+          background: #ff9800;
+          color: white;
+          border: none;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.2s;
+        "
+        onmouseover="this.style.transform = 'rotate(45deg)'"
+        onmouseout="this.style.transform = 'rotate(0deg)'"
+        aria-label="Reiniciar sesión"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M23 4v6h-6" />
+          <path d="M1 20v-6h6" />
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+          <path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+        </svg>
+      </button>
+    </div>
+
+    <div
+      id="tecladoContainer"
+      style="
+        display: none;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        z-index: 1001;
+        background: #fff;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+      "
+    >
       <div class="simple-keyboard"></div>
-    </div>    
+    </div>
 
     <script>
       function apagarSistema() {
         if (confirm("¿Estás seguro que deseas apagar el sistema?")) {
-          fetch('http://localhost:3000/api/apagar', { method: 'POST' })
-            .then(res => {
-              if (!res.ok) throw new Error('Error al apagar el sistema');
+          fetch("http://localhost:3000/api/apagar", { method: "POST" })
+            .then((res) => {
+              if (!res.ok) throw new Error("Error al apagar el sistema");
             })
-            .catch(err => {
+            .catch((err) => {
               alert("No se pudo apagar el sistema: " + err.message);
             });
         }
       }
 
       // Mostrar / Ocultar contraseña (sin re-renderizar SVG)
-      const togglePassword = document.getElementById('togglePassword');
-      const passwordInput = document.getElementById('password');
+      const togglePassword = document.getElementById("togglePassword");
+      const passwordInput = document.getElementById("password");
 
-      togglePassword.addEventListener('click', () => {
-        const toText = passwordInput.type === 'password';
-        passwordInput.type = toText ? 'text' : 'password';
-        togglePassword.classList.toggle('active', toText);
-        togglePassword.setAttribute('aria-pressed', String(toText));
+      togglePassword.addEventListener("click", () => {
+        const toText = passwordInput.type === "password";
+        passwordInput.type = toText ? "text" : "password";
+        togglePassword.classList.toggle("active", toText);
+        togglePassword.setAttribute("aria-pressed", String(toText));
       });
     </script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-keyboard/3.8.67/index.min.js"></script>
     <script src="/js/teclado.js"></script>
     <script>
-      if (typeof tecladoVirtual !== 'undefined') {
+      if (typeof tecladoVirtual !== "undefined") {
         tecladoVirtual.init();
-        document.querySelectorAll('.usar-teclado').forEach(input => {
-          input.addEventListener('focus', () => {
+        document.querySelectorAll(".usar-teclado").forEach((input) => {
+          input.addEventListener("focus", () => {
             tecladoVirtual.show(input);
           });
         });

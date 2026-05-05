@@ -42,7 +42,7 @@ async function registerUserInZKTeco(Codigo) {
   try {
     console.log(`Registrando en ZKTeco - Código: ${Codigo}`);
     await addUser(Codigo);
-    await addUserAccessLevel(Codigo.substring(0, 6));
+    await addUserAccessLevel(Codigo); // Ya no necesita substring, Codigo es de 6 dígitos
     console.log(`ZKTeco: Código ${Codigo} registrado exitosamente`);
   } catch (e) {
     console.warn("ZKTeco: no se pudo registrar acceso para", Codigo, e);
@@ -103,7 +103,7 @@ async function cargarServicios() {
     });
 
     document.querySelectorAll(".generarQR").forEach((btn) => {
-      btn.addEventListener("click", (e) => {
+      btn.addEventListener("click", async (e) => {
         e.preventDefault();
 
         const estado_caja = localStorage.getItem("estado_caja");
@@ -134,7 +134,7 @@ async function cargarServicios() {
           .padStart(2, "0")}`;
         const fechaStr = fechaHoraAct.toISOString().split("T")[0];
         const tipoStr = btn.dataset.tipo;
-        const numeroT = generarTokenNumerico();
+        const numeroT = await generarTokenNumerico();
         const valor = getPrecio(tipoStr);
 
         datosPendientes = {
@@ -204,7 +204,7 @@ async function imprimirTicket({
     // --- Generar e imprimir cada boleta ---
     for (let i = 0; i < cantidadBoletas; i++) {
       // ✅ Cada ticket tiene un código único
-      const codigoUnico = esLote ? generarTokenNumerico() : Codigo;
+      const codigoUnico = esLote ? await generarTokenNumerico() : Codigo;
 
       // ✅ Para lotes, generar folio correlativo (folioBase-1, folioBase-2, etc.)
       const folioActual = esLote ? `${folio}-${i + 1}` : folio;
@@ -599,7 +599,7 @@ async function continuarConPago(metodoPago) {
 
       // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
       const { fecha: fechaI, hora: horaI } = obtenerFechaHoraChile();
-      const codigoI = generarTokenNumerico();
+      const codigoI = await generarTokenNumerico();
 
       console.log(`💰 INICIANDO PAGO EFECTIVO - Nuevo código: ${codigoI}`);
 
@@ -758,7 +758,7 @@ async function continuarConPago(metodoPago) {
 
     for (let i = 0; i < Number(cantidad); i++) {
       try {
-        const codigoI = generarTokenNumerico();
+        const codigoI = await generarTokenNumerico();
         const folioActual = computeFolioCorrelativo(folioBase, i);
 
         console.log(`\n🎫 TICKET ${i + 1}/${cantidad}:`, {
@@ -982,11 +982,43 @@ async function confirmarImpresionExitosa(total) {
   });
 }
 
-function generarTokenNumerico() {
-  let token = (Math.floor(Math.random() * 9) + 1).toString();
-  for (let i = 1; i < 10; i++) {
-    token += Math.floor(Math.random() * 10);
+async function verificarSiExistePin(pin) {
+  const urlCheck = urlBase + "/TerminalCalama/PHP/Restroom/getUser.php";
+  try {
+    const response = await fetch(urlCheck, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ pin: pin }),
+    });
+    const result = await response.json();
+    return result.code === 0; // Si es 0, el PIN ya existe
+  } catch (error) {
+    console.error("Error al verificar pin en ZKTeco:", error);
+    return false; // Si falla la red, permitimos usarlo por seguridad
   }
+}
+
+async function generarTokenNumerico() {
+  let existe = true;
+  let token = "";
+
+  while (existe) {
+    // Generar código de 6 dígitos
+    token = (Math.floor(Math.random() * 9) + 1).toString();
+    for (let i = 1; i < 6; i++) {
+      token += Math.floor(Math.random() * 10);
+    }
+
+    // Verificar si existe en ZKTeco
+    existe = await verificarSiExistePin(token);
+    if (existe) {
+      console.log(`⚠️ PIN ${token} ya ocupado en ZKTeco, buscando otro...`);
+    }
+  }
+
   return token;
 }
 

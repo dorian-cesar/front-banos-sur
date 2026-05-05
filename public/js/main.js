@@ -166,11 +166,11 @@ document.addEventListener("DOMContentLoaded", function () {
   searchBtn.addEventListener("click", async function () {
     const codigo = inputField.value.trim();
 
-    if (!/^\d{10}$/.test(codigo)) {
+    if (!/^\d{6,10}$/.test(codigo)) {
       Swal.fire({
         icon: "warning",
         title: "Código inválido",
-        text: "El código debe contener exactamente 10 números.",
+        text: "El código debe contener entre 6 y 10 números.",
         customClass: {
           title: "swal-font",
           htmlContainer: "swal-font",

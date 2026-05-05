@@ -134,11 +134,9 @@ async function cargarServicios() {
           .padStart(2, "0")}`;
         const fechaStr = fechaHoraAct.toISOString().split("T")[0];
         const tipoStr = btn.dataset.tipo;
-        const numeroT = await generarTokenNumerico();
         const valor = getPrecio(tipoStr);
 
         datosPendientes = {
-          Codigo: numeroT,
           hora: horaStr,
           fecha: fechaStr,
           tipo: tipoStr,
@@ -401,7 +399,15 @@ async function continuarConPago(metodoPago) {
 
   console.log(`🟢 INICIANDO PAGO - Método: ${metodoPago}`, datosPendientes);
 
-  const { Codigo, tipo } = datosPendientes;
+  const { tipo } = datosPendientes;
+  let Codigo = null;
+
+  // 🔹 Generar código solo si es un pago individual (Tarjeta o Efectivo)
+  if (metodoPago !== "EFECTIVO_LOTE") {
+    Codigo = await generarTokenNumerico();
+    console.log(`🔑 Código generado para el pago: ${Codigo}`);
+  }
+
   const estado_caja = localStorage.getItem("estado_caja");
   const precioFinal = getPrecio(tipo);
   const id_caja = localStorage.getItem("id_aperturas_cierres");
@@ -597,11 +603,11 @@ async function continuarConPago(metodoPago) {
       // ✅ OBTENER FOLIO BASE para pago individual en efectivo
       const { folioBase, ficticia } = await obtenerFolioBaseIndividual();
 
-      // ✅ OBTENER FECHA/HORA ACTUAL para Chile - CON AWAIT
+      // ✅ USAR EL CÓDIGO GENERADO AL INICIO DE ESTA FUNCIÓN
       const { fecha: fechaI, hora: horaI } = obtenerFechaHoraChile();
-      const codigoI = await generarTokenNumerico();
+      const codigoI = Codigo; 
 
-      console.log(`💰 INICIANDO PAGO EFECTIVO - Nuevo código: ${codigoI}`);
+      console.log(`💰 PROCESANDO PAGO EFECTIVO - Código: ${codigoI}`);
 
       QR.makeCode(codigoI);
       await new Promise((resolve) => setTimeout(resolve, 500));

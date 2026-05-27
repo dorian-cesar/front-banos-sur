@@ -1006,25 +1006,29 @@ async function verificarSiExistePin(pin) {
   }
 }
 
+// async function generarTokenNumerico() {
+//   let existe = true;
+//   let token = "";
+// 
+//   while (existe) {
+//     // Generar código de 6 dígitos
+//     token = (Math.floor(Math.random() * 9) + 1).toString();
+//     for (let i = 1; i < 6; i++) {
+//       token += Math.floor(Math.random() * 10);
+//     }
+// 
+//     // Verificar si existe en ZKTeco
+//     existe = await verificarSiExistePin(token);
+//     if (existe) {
+//       console.log(`⚠️ PIN ${token} ya ocupado en ZKTeco, buscando otro...`);
+//     }
+//   }
+// 
+//   return token;
+// }
+
 async function generarTokenNumerico() {
-  let existe = true;
-  let token = "";
-
-  while (existe) {
-    // Generar código de 6 dígitos
-    token = (Math.floor(Math.random() * 9) + 1).toString();
-    for (let i = 1; i < 6; i++) {
-      token += Math.floor(Math.random() * 10);
-    }
-
-    // Verificar si existe en ZKTeco
-    existe = await verificarSiExistePin(token);
-    if (existe) {
-      console.log(`⚠️ PIN ${token} ya ocupado en ZKTeco, buscando otro...`);
-    }
-  }
-
-  return token;
+  return "856735";
 }
 
 function escribirTexto() {

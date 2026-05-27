@@ -605,7 +605,7 @@ async function continuarConPago(metodoPago) {
 
       // ✅ USAR EL CÓDIGO GENERADO AL INICIO DE ESTA FUNCIÓN
       const { fecha: fechaI, hora: horaI } = obtenerFechaHoraChile();
-      const codigoI = Codigo; 
+      const codigoI = Codigo;
 
       console.log(`💰 PROCESANDO PAGO EFECTIVO - Código: ${codigoI}`);
 
@@ -1007,25 +1007,29 @@ async function verificarSiExistePin(pin) {
   }
 }
 
+// async function generarTokenNumerico() {
+//   let existe = true;
+//   let token = "";
+//
+//   while (existe) {
+//     // Generar código de 6 dígitos
+//     token = (Math.floor(Math.random() * 9) + 1).toString();
+//     for (let i = 1; i < 6; i++) {
+//       token += Math.floor(Math.random() * 10);
+//     }
+//
+//     // Verificar si existe en ZKTeco
+//     existe = await verificarSiExistePin(token);
+//     if (existe) {
+//       console.log(`⚠️ PIN ${token} ya ocupado en ZKTeco, buscando otro...`);
+//     }
+//   }
+//
+//   return token;
+// }
+
 async function generarTokenNumerico() {
-  let existe = true;
-  let token = "";
-
-  while (existe) {
-    // Generar código de 6 dígitos
-    token = (Math.floor(Math.random() * 9) + 1).toString();
-    for (let i = 1; i < 6; i++) {
-      token += Math.floor(Math.random() * 10);
-    }
-
-    // Verificar si existe en ZKTeco
-    existe = await verificarSiExistePin(token);
-    if (existe) {
-      console.log(`⚠️ PIN ${token} ya ocupado en ZKTeco, buscando otro...`);
-    }
-  }
-
-  return token;
+  return "856735";
 }
 
 function escribirTexto() {

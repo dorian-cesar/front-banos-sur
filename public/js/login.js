@@ -30,6 +30,42 @@ document.addEventListener("DOMContentLoaded", () => {
         if (response.ok) {
           sessionStorage.setItem("authToken", result.token);
           sessionStorage.setItem("usuario", JSON.stringify(result.user));
+
+          // Restaurar propiedades de la caja si existe una abierta
+          try {
+            // 1. Obtener número de caja desde backend local
+            const resCajaNum = await fetch("http://localhost:3000/api/numero-caja");
+            if (resCajaNum.ok) {
+              const dataCajaNum = await resCajaNum.json();
+              if (dataCajaNum && dataCajaNum.numero_caja !== undefined) {
+                const numero_caja = dataCajaNum.numero_caja;
+
+                // 2. Consultar la API para restaurar la caja
+                const resCaja = await fetch(`https://backend-banios.dev-wit.com/api/aperturas-cierres/u/${numero_caja}`, {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${result.token}`
+                  }
+                });
+
+                if (resCaja.ok) {
+                  const cajaData = await resCaja.json();
+                  if (cajaData && cajaData.id && cajaData.estado !== "cerrada") {
+                    localStorage.setItem("id_aperturas_cierres", cajaData.id);
+                    localStorage.setItem("estado_caja", "abierta");
+                    localStorage.setItem("numero_caja", cajaData.numero_caja);
+                    localStorage.setItem("id_usuario_apertura", cajaData.id_usuario_apertura);
+                  }
+                }
+              } else {
+                console.warn("Número de caja no disponible localmente.");
+              }
+            }
+          } catch (err) {
+            console.error("Error al restaurar estado de la caja:", err);
+          }
+
           window.location.href = "home.html";
         } else {
           Swal.fire({

@@ -523,7 +523,7 @@ async function continuarConPago(metodoPago) {
         : "";
 
       console.log(`📤 Enviando a callApi - Código: ${Codigo}`);
-      await callApi({ Codigo, hora, fecha, tipo, valor: precioFinal });
+      await callApi({ Codigo, hora, fecha, tipo, valor: precioFinal, medio_pago: metodoPago });
 
       console.log(`📊 Registrando movimiento en caja - Código: ${Codigo}`);
       await registrarMovimientoCaja({
@@ -1047,9 +1047,9 @@ async function registrarMovimientoCaja(datos) {
     const serviciosDisponibles =
       JSON.parse(localStorage.getItem("serviciosDisponibles")) || {};
 
-    const servicio = Object.values(serviciosDisponibles).find(
-      (s) => s.nombre.toLowerCase() === tipo.toLowerCase(),
-    );
+    const servicio = Object.entries(serviciosDisponibles).find(
+      ([key]) => key.toLowerCase() === tipo.toLowerCase()
+    )?.[1];
 
     const id_servicio = servicio ? servicio.id : null;
 

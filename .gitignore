@@ -2,3 +2,5 @@
 /.vscode
 .env
 tickets copy.js
+/.next
+.env.local

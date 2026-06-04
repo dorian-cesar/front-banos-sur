@@ -39,7 +39,8 @@ export default function HomePage() {
   const [datosPendientes, setDatosPendientes] = useState(null);
 
   const numeroCajaEnv = process.env.NEXT_PUBLIC_NUMERO_CAJA || '77';
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backend-banios.dev-wit.com/api';
+  // Proxy local — agrega el token automáticamente desde la cookie HttpOnly
+  const backendUrl = '/api/proxy';
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -59,22 +60,24 @@ export default function HomePage() {
 
   const cargarServicios = async () => {
     try {
-      const token = sessionStorage.getItem('authToken');
-      const res = await fetch(`${backendUrl}/services`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Llama al proxy local que usa la cookie HttpOnly para autenticar
+      const res = await fetch('/api/services');
 
-      if (!res.ok) throw new Error('Error al cargar servicios');
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Error al cargar servicios');
+      }
 
       const data = await res.json();
       if (data && Array.isArray(data.data)) {
         const activos = data.data.filter((s) => s.estado === 'activo');
         setServicios(activos);
+      } else if (Array.isArray(data)) {
+        const activos = data.filter((s) => s.estado === 'activo');
+        setServicios(activos);
       }
     } catch (error) {
-      console.error(error);
+      console.warn('Servicios no disponibles:', error.message);
     }
   };
 

@@ -51,7 +51,8 @@ export default function CajaPage() {
   const montoRetiroRef = useRef(null);
 
   const numeroCajaEnv = process.env.NEXT_PUBLIC_NUMERO_CAJA || '77';
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backend-banios.dev-wit.com/api';
+  // Proxy local — agrega el token automáticamente desde la cookie HttpOnly
+  const backendUrl = '/api/proxy';
 
   useEffect(() => {
     if (typeof window !== 'undefined') {

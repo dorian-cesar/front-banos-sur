@@ -64,6 +64,9 @@ export default function LoginPage() {
 
       if (response.ok && result.success) {
         sessionStorage.setItem('usuario', JSON.stringify(result.user));
+        if (result.token) {
+          sessionStorage.setItem('authToken', result.token);
+        }
 
         // Intentar restaurar caja si hay una abierta
         try {

@@ -300,7 +300,7 @@ async function imprimirTicket({
       const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
 
       // --- Enviar a backend local para impresión ---
-      const responsePrint = await fetch("http://localhost:3000/api/imprimi", {
+      const responsePrint = await fetch("http://localhost:3000/api/imprimir", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -300,7 +300,7 @@ async function imprimirTicket({
       const pdfBase64 = btoa(String.fromCharCode(...pdfBytes));
 
       // --- Enviar a backend local para impresión ---
-      const responsePrint = await fetch("http://localhost:3000/api/imprimir", {
+      const responsePrint = await fetch("http://localhost:3000/api/imprimi", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -523,6 +523,50 @@ async function continuarConPago(metodoPago) {
             .replace(/^data:image\/png;base64,/, "")
         : "";
 
+      // ✅ IMPRIMIR PRIMERO — si falla, detener sin guardar nada
+      console.log(`🖨️ Iniciando impresión de ticket - Código: ${Codigo}`);
+      try {
+        await imprimirTicket({
+          Codigo,
+          hora,
+          fecha,
+          tipo,
+          valor: precioFinal,
+          qrBase64,
+          folio: folioBase,
+          cantidad: 1,
+        });
+      } catch (printErr) {
+        console.error(
+          "🛑 Error de impresión (TARJETA) — proceso detenido:",
+          printErr.message,
+        );
+        Swal.fire({
+          icon: "error",
+          title: "Error de impresión",
+          text: "No se pudo imprimir el ticket. La venta no fue registrada. Verifique la impresora e intente nuevamente.",
+          customClass: {
+            popup: "alert-card",
+            title: "swal-font",
+            confirmButton: "my-confirm-btn",
+          },
+          buttonsStyling: false,
+        });
+        hideSpinner();
+        cerrarModalPago();
+        return;
+      }
+
+      // ✅ REGISTRAR EN ZKTECO PRIMERO (Antes de callApi y registrarMovimientoCaja)
+      try {
+        await registerUserInZKTeco(Codigo);
+      } catch (e) {
+        console.warn(
+          "ZKTeco: error inesperado agregando usuario con pago tarjeta",
+          e,
+        );
+      }
+
       console.log(`📤 Enviando a callApi - Código: ${Codigo}`);
       await callApi({
         Codigo,
@@ -551,27 +595,6 @@ async function continuarConPago(metodoPago) {
         cardBrand: data.cardBrand,
         boleta: folioBase,
       });
-
-      console.log(`🖨️ Iniciando impresión de ticket - Código: ${Codigo}`);
-      await imprimirTicket({
-        Codigo,
-        hora,
-        fecha,
-        tipo,
-        valor: precioFinal,
-        qrBase64,
-        folio: folioBase, // ✅ AGREGAR FOLIO BASE
-        cantidad: 1,
-      });
-
-      try {
-        await registerUserInZKTeco(Codigo);
-      } catch (e) {
-        console.warn(
-          "ZKTeco: error inesperado agregando usuario con pago tarjeta",
-          e,
-        );
-      }
 
       console.log(`✅ PAGO TARJETA COMPLETADO - Código: ${Codigo}`);
     } catch (err) {
@@ -625,6 +648,50 @@ async function continuarConPago(metodoPago) {
             .replace(/^data:image\/png;base64,/, "")
         : "";
 
+      // ✅ IMPRIMIR PRIMERO — si falla, detener sin guardar nada
+      console.log(`🖨️ Iniciando impresión de ticket - Código: ${codigoI}`);
+      try {
+        await imprimirTicket({
+          Codigo: codigoI,
+          hora: horaI,
+          fecha: fechaI,
+          tipo,
+          valor: precioFinal,
+          qrBase64,
+          folio: folioBase,
+          cantidad: 1,
+        });
+      } catch (printErr) {
+        console.error(
+          "🛑 Error de impresión (EFECTIVO) — proceso detenido:",
+          printErr.message,
+        );
+        Swal.fire({
+          icon: "error",
+          title: "Error de impresión",
+          text: "No se pudo imprimir el ticket. La venta no fue registrada. Verifique la impresora e intente nuevamente.",
+          customClass: {
+            popup: "alert-card",
+            title: "swal-font",
+            confirmButton: "my-confirm-btn",
+          },
+          buttonsStyling: false,
+        });
+        hideSpinner();
+        cerrarModalPago();
+        return;
+      }
+
+      // ✅ REGISTRAR EN ZKTECO PRIMERO (Antes de callApi y registrarMovimientoCaja)
+      try {
+        await registerUserInZKTeco(codigoI);
+      } catch (e) {
+        console.warn(
+          "ZKTeco: error inesperado agregando usuario pago en efectivo",
+          e,
+        );
+      }
+
       console.log(`📤 Enviando a callApi - Código: ${codigoI}`);
       await callApi({
         Codigo: codigoI,
@@ -647,27 +714,6 @@ async function continuarConPago(metodoPago) {
         id_usuario,
         id_caja,
         boleta: folioBase,
-      });
-
-      try {
-        await registerUserInZKTeco(codigoI);
-      } catch (e) {
-        console.warn(
-          "ZKTeco: error inesperado agregando usuario pago en efectivo",
-          e,
-        );
-      }
-
-      console.log(`🖨️ Iniciando impresión de ticket - Código: ${codigoI}`);
-      await imprimirTicket({
-        Codigo: codigoI,
-        hora: horaI,
-        fecha: fechaI,
-        tipo,
-        valor: precioFinal,
-        qrBase64,
-        folio: folioBase, // ✅ AGREGAR FOLIO BASE
-        cantidad: 1,
       });
 
       console.log(`✅ PAGO EFECTIVO COMPLETADO - Código: ${codigoI}`);
@@ -790,6 +836,52 @@ async function continuarConPago(metodoPago) {
               .replace(/^data:image\/png;base64,/, "")
           : "";
 
+        // ✅ IMPRIMIR PRIMERO — si falla, detener TODO el lote
+        console.log(`🖨️ Imprimiendo ticket ${i + 1}`);
+        try {
+          await imprimirTicket({
+            Codigo: codigoI,
+            hora: horaI,
+            fecha: fechaI,
+            tipo,
+            valor: precioFinal,
+            qrBase64: qrBase64I,
+            folio: folioActual,
+            cantidad: 1,
+          });
+        } catch (printErr) {
+          console.error(
+            `🛑 Error de impresión en ticket ${i + 1}/${cantidad} — lote detenido:`,
+            printErr.message,
+          );
+          Swal.fire({
+            icon: "error",
+            title: `Error de impresión (ticket ${i + 1}/${cantidad})`,
+            html: `No se pudo imprimir el ticket <strong>${i + 1}</strong>.<br>El lote fue detenido. <br><br>Tickets impresos correctamente: <strong>${ticketsImpresos}</strong>.<br>Verifique la impresora e intente nuevamente.`,
+            customClass: {
+              popup: "alert-card",
+              title: "swal-font",
+              confirmButton: "my-confirm-btn",
+            },
+            buttonsStyling: false,
+          });
+          hideSpinner();
+          cerrarModalPago();
+          return;
+        }
+
+        ticketsImpresos++;
+
+        // ✅ REGISTRAR EN ZKTECO PRIMERO (Antes de registrarMovimientoCaja y callApi)
+        try {
+          await registerUserInZKTeco(codigoI);
+        } catch (e) {
+          console.warn(
+            "ZKTeco: error inesperado agregando usuario con pago efectivo_lote",
+            e,
+          );
+        }
+
         console.log(`📊 Registrando movimiento de lote en caja`);
         await registrarMovimientoCaja({
           codigo: codigoI,
@@ -815,31 +907,6 @@ async function continuarConPago(metodoPago) {
           id_caja: id_aperturas_cierres,
           medio_pago: metodoPago,
         });
-
-        // Imprimir ticket
-        console.log(`🖨️ Imprimiendo ticket ${i + 1}`);
-        await imprimirTicket({
-          Codigo: codigoI,
-          hora: horaI,
-          fecha: fechaI,
-          tipo,
-          valor: precioFinal,
-          qrBase64: qrBase64I,
-          folio: folioActual,
-          cantidad: 1,
-        });
-
-        ticketsImpresos++;
-
-        // Registrar en ZKTeco
-        try {
-          await registerUserInZKTeco(codigoI);
-        } catch (e) {
-          console.warn(
-            "ZKTeco: error inesperado agregando usuario con pago efectivo_lote",
-            e,
-          );
-        }
 
         // Pausa para corte (excepto último ticket)
         // if (i + 1 < Number(cantidad) && typeof pausaParaCorte === "function") {

@@ -461,13 +461,13 @@ $(document).ready(function () {
             } else if (error.status === 500) {
               Swal.fire({
                 icon: "error",
-                title: "Error del servidor",
-                text: "Error del servidor: " + error.responseJSON.error,
+                title: "No hay Internet",
+                text: "No hay Internet: " + error.responseJSON.error,
               });
             } else {
               Swal.fire({
                 icon: "error",
-                title: "Error de conexión",
+                title: "No hay Internet",
                 text: "Error al conectar con el servidor",
               });
             }
@@ -817,7 +817,7 @@ $(document).ready(function () {
           error: function (xhr, status, error) {
             Swal.fire({
               icon: "error",
-              title: "Error del servidor",
+              title: "No hay Internet",
               text: "Error en el servidor: " + error,
             });
           },
@@ -989,29 +989,46 @@ $(document).ready(function () {
 
         // Realizar el retiro con el ID del admin
         realizarRetiro(monto, motivo, idUsuarioAdmin)
-          .then(() => {
-            Swal.fire({
-              icon: "success",
-              title: "¡Retiro exitoso!",
-              text: "Retiro realizado exitosamente.",
-              timer: 2000,
-              showConfirmButton: false,
-            }).then(() => {
-              $("#modalRetiro").modal("hide");
-              $("#formRetiroEfectivo")[0].reset();
+          .then((res) => {
+            if (res.impresionFallida) {
+              Swal.fire({
+                icon: "warning",
+                title: "Retiro Exitoso (Sin Impresión)",
+                text: "El retiro se registró exitosamente en el sistema, pero ocurrió un problema al imprimir el comprobante. Revise internet y cables.",
+                confirmButtonText: "Entendido",
+              }).then(() => {
+                $("#modalRetiro").modal("hide");
+                $("#formRetiroEfectivo")[0].reset();
 
-              // Limpiar sesión de admin después del retiro
-              sessionStorage.removeItem("adminAuth");
+                // Limpiar sesión de admin después del retiro
+                sessionStorage.removeItem("adminAuth");
 
-              cargarCaja(); // Recargar datos
-            });
+                cargarCaja(); // Recargar datos
+              });
+            } else {
+              Swal.fire({
+                icon: "success",
+                title: "¡Retiro exitoso!",
+                text: "Retiro realizado y comprobantes impresos exitosamente.",
+                timer: 2000,
+                showConfirmButton: false,
+              }).then(() => {
+                $("#modalRetiro").modal("hide");
+                $("#formRetiroEfectivo")[0].reset();
+
+                // Limpiar sesión de admin después del retiro
+                sessionStorage.removeItem("adminAuth");
+
+                cargarCaja(); // Recargar datos
+              });
+            }
           })
           .catch((error) => {
             console.error("Error en retiro:", error);
             Swal.fire({
               icon: "error",
               title: "Error en retiro",
-              text: "Error al procesar el retiro: " + error.message,
+              text: "Error al procesar el retiro: " + (error.message || error),
             });
           })
           .finally(() => {
@@ -1108,7 +1125,7 @@ $(document).ready(function () {
               mensaje: "Credenciales incorrectas",
             });
           } else {
-            reject(new Error("Error de conexión: " + error));
+            reject(new Error("No hay Internet: " + error));
           }
         },
       });
@@ -1148,18 +1165,36 @@ $(document).ready(function () {
           throw new Error(response.message || "Error en el retiro");
         }
 
+        let impresionFallida = false;
+
         // 2. Imprimir primera copia
-        await imprimirCopiaRetiro(response.datosImpresion);
+        try {
+          await imprimirCopiaRetiro(response.datosImpresion);
+        } catch (printError) {
+          console.error("Error en primera impresión de retiro:", printError);
+          impresionFallida = true;
+        }
 
-        // 3. Mostrar alerta para cortar el primer comprobante
-        await mostrarAlertaCorte();
+        // 3. Mostrar alerta para cortar el primer comprobante (solo si la primera impresión no falló catastróficamente)
+        if (!impresionFallida) {
+          await mostrarAlertaCorte();
 
-        // 4. Imprimir segunda copia
-        await imprimirCopiaRetiro(response.datosImpresion);
+          // 4. Imprimir segunda copia
+          try {
+            await imprimirCopiaRetiro(response.datosImpresion);
+          } catch (printError) {
+            console.error("Error en segunda impresión de retiro:", printError);
+            impresionFallida = true;
+          }
+        }
 
-        resolve(response);
+        // Devolvemos el response original con un flag que indica el estado de la impresión
+        resolve({
+          ...response,
+          impresionFallida: impresionFallida,
+        });
       } catch (error) {
-        reject(new Error("Error del servidor: " + error));
+        reject(error);
       }
     });
   }
@@ -1298,7 +1333,176 @@ $(document).ready(function () {
     });
   }
 
-  // Mostrar información del autorizador cuando se abre el modal
+  // Mostrar información  // Limpiar la información cuando se cierra el modal
+  $("#modalRetiro").on("hidden.bs.modal", function () {
+    $("#infoAutorizador").addClass("d-none");
+    $("#nombreAutorizador").text("");
+  });
+
+  // Reimprimir último retiro de efectivo
+  $("#btnReimprimirRetiro").on("click", async function () {
+    const estadoCaja = localStorage.getItem("estado_caja");
+    const numeroCaja = localStorage.getItem("numero_caja");
+    const token = sessionStorage.getItem("authToken");
+
+    if (estadoCaja !== "abierta" || !numeroCaja || !token) {
+      Swal.fire({
+        icon: "warning",
+        title: "Caja no abierta",
+        text: "Debe tener una caja abierta para reimprimir retiros.",
+      });
+      return;
+    }
+
+    // Mostrar loading
+    Swal.fire({
+      title: "Buscando último retiro...",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
+    try {
+      // 1. Obtener movimientos de la caja activa
+      const resMovimientos = await $.ajax({
+        url: `https://backend-banios.dev-wit.com/api/movimientos/por-caja?numero_caja=${numeroCaja}`,
+        type: "GET",
+        headers: {
+          Authorization: "Bearer " + token,
+        },
+      });
+
+      if (
+        !resMovimientos.success ||
+        !resMovimientos.movimientos ||
+        !resMovimientos.movimientos.length
+      ) {
+        Swal.fire({
+          icon: "info",
+          title: "Sin movimientos",
+          text: "No se encontraron movimientos registrados en esta caja.",
+        });
+        return;
+      }
+
+      // 2. Filtrar y ordenar movimientos para encontrar el último retiro
+      // Ordenar por ID descendente para asegurar que el primero es el último registrado
+      const retiros = resMovimientos.movimientos
+        .filter((m) => {
+          return (
+            m.tipo_servicio === "RETIRO" ||
+            (m.medio_pago && m.medio_pago.toLowerCase().includes("retiro")) ||
+            (m.nombre_servicio &&
+              m.nombre_servicio.toLowerCase().includes("retiro"))
+          );
+        })
+        .sort((a, b) => b.id - a.id);
+
+      if (!retiros.length) {
+        Swal.fire({
+          icon: "info",
+          title: "Sin retiros",
+          text: "No se encontraron retiros de efectivo registrados en esta caja.",
+        });
+        return;
+      }
+
+      const ultimoRetiro = retiros[0];
+
+      // Formatear la fecha
+      let fechaFormateada = "--/--/----";
+      if (ultimoRetiro.fecha) {
+        const soloFecha = ultimoRetiro.fecha.split("T")[0];
+        const [anio, mes, dia] = soloFecha.split("-");
+        fechaFormateada = `${dia}-${mes}-${anio}`;
+      }
+
+      // Preparar datos para imprimirCopiaRetiro
+      const datosImpresion = {
+        codigo: ultimoRetiro.id,
+        fecha: fechaFormateada,
+        hora: ultimoRetiro.hora || "--:--:--",
+        nombre_caja: numeroCaja,
+        nombre_cajero: ultimoRetiro.nombre_usuario || "Cajero",
+        nombre_usuario:
+          ultimoRetiro.autorizado_por || ultimoRetiro.nombre_usuario || "Admin",
+        monto: Math.abs(parseFloat(ultimoRetiro.monto || 0)),
+        motivo: ultimoRetiro.nombre_servicio || "Retiro de efectivo",
+      };
+
+      // Confirmar reimpresión
+      Swal.fire({
+        title: "¿Reimprimir último retiro?",
+        html: `Se reimprimirá el retiro de <strong>$${datosImpresion.monto.toLocaleString("es-CL")}</strong> realizado a las ${datosImpresion.hora}.`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Sí, reimprimir",
+        cancelButtonText: "Cancelar",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          Swal.fire({
+            title: "Reimprimiendo...",
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            },
+          });
+
+          try {
+            // Imprimir primera copia
+            await imprimirCopiaRetiro(datosImpresion);
+
+            // Alerta de corte
+            await mostrarAlertaCorte();
+
+            // Imprimir segunda copia
+            await imprimirCopiaRetiro(datosImpresion);
+
+            Swal.fire({
+              icon: "success",
+              title: "Reimpresión exitosa",
+              text: "Los comprobantes se han reimpreso correctamente.",
+              timer: 2000,
+              showConfirmButton: false,
+            });
+          } catch (printError) {
+            console.error("Error en reimpresión:", printError);
+            Swal.fire({
+              icon: "error",
+              title: "Error de Impresión",
+              text: "Ocurrió un error al intentar imprimir. Revise internet y cables.",
+            });
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error al buscar último retiro:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "No se pudo obtener la información de los movimientos.",
+      });
+    }
+  });
+
+  // Deshabilitar botón si la caja ya está abierta
+  // Validar botones según estado de la caja al iniciar
+  const estadoCaja = localStorage.getItem("estado_caja");
+  if (estadoCaja === "abierta") {
+    $("#btnAbrirCaja").prop("disabled", true);
+    $("#btnCerrarCaja").prop("disabled", false);
+  } else {
+    $("#btnAbrirCaja").prop("disabled", false);
+    $("#btnCerrarCaja").prop("disabled", true);
+  }
+
+  document.getElementById("btnVolver").addEventListener("click", () => {
+    window.location.href = "/home.html";
+  });
+
   $("#modalRetiro").on("show.bs.modal", function () {
     const adminAuthRaw = sessionStorage.getItem("adminAuth");
 
@@ -1315,20 +1519,5 @@ $(document).ready(function () {
   $("#modalRetiro").on("hidden.bs.modal", function () {
     $("#infoAutorizador").addClass("d-none");
     $("#nombreAutorizador").text("");
-  });
-
-  // Deshabilitar botón si la caja ya está abierta
-  // Validar botones según estado de la caja al iniciar
-  const estadoCaja = localStorage.getItem("estado_caja");
-  if (estadoCaja === "abierta") {
-    $("#btnAbrirCaja").prop("disabled", true);
-    $("#btnCerrarCaja").prop("disabled", false);
-  } else {
-    $("#btnAbrirCaja").prop("disabled", false);
-    $("#btnCerrarCaja").prop("disabled", true);
-  }
-
-  document.getElementById("btnVolver").addEventListener("click", () => {
-    window.location.href = "/home.html";
   });
 });

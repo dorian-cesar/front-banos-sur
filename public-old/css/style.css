@@ -1,0 +1,609 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  width: 1366px;
+  height: 768px;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  color: #2699fb;
+  top: 0px;
+  left: 0px;
+  width: 1366px;
+  height: 768px;
+  background: #f1f9ff 0% 0% no-repeat padding-box;
+  opacity: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+nav {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 104px;
+  background: #bce0fd 0% 0% no-repeat padding-box;
+  opacity: 1;
+}
+
+nav h1 {
+  font: normal normal bold 36px/42px Arial;
+  margin: 0;
+}
+
+h2 {
+  text-align: left;
+  font: normal normal bold 28px/32px Arial;
+  letter-spacing: 0px;
+  color: #2699fb;
+  margin-bottom: 1.5rem;
+}
+
+h3 {
+  font: normal normal bold 28px/32px Arial;
+}
+
+.logo-pullman {
+  width: 192px;
+  height: 55px;
+}
+
+.logo-wit {
+  width: 102px;
+  height: 36px;
+}
+
+#codigo-container {
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  padding-right: 8rem;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  gap: 0.5rem;
+}
+
+.codigo-input {
+  width: 248px;
+  height: 48px;
+  border-radius: 24px;
+  box-shadow: inset 1px 4px 2px #00000029;
+  border: 1px solid #ff5600;
+  border-radius: 30px;
+  padding-left: 44px;
+  color: #2599fb;
+  font-size: 13px;
+}
+
+.codigo-input-container {
+  position: relative;
+  display: inline-block;
+}
+
+.input-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  width: 20px;
+  pointer-events: none;
+}
+
+.codigo-input:focus {
+  outline-color: #ff5600;
+}
+
+.codigo-input::placeholder {
+  width: 248px;
+  height: 48px;
+  color: #2699fb;
+  font: normal normal normal 13px Arial;
+}
+
+.sm-button {
+  background: #ff5600 0% 0% no-repeat padding-box;
+  width: 214px;
+  height: 43px;
+  box-shadow: inset 0px 3px 6px #ffffff;
+  border-radius: 24px;
+  border-color: #ff5600;
+  border-style: solid;
+  font: normal normal bold 17px/20px Arial;
+  color: #f5f5f5;
+  cursor: pointer;
+}
+
+.sm-button:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.home-button {
+  background: #ff5600 0% 0% no-repeat padding-box;
+  width: 140px;
+  height: 43px;
+  box-shadow: inset 0px 3px 6px #ffffff;
+  border-radius: 24px;
+  border-color: #ff5600;
+  border-style: solid;
+  font: normal normal bold 17px/20px Arial;
+  color: #f5f5f5;
+  cursor: pointer;
+}
+
+.home-button:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.caja-button {
+  display: inline-block; /* Para que respete dimensiones de la imagen */
+  border: none;          /* Elimina bordes por defecto */
+  background: none;      /* Fondo transparente */
+  padding: 0;            /* Elimina relleno */
+  cursor: pointer;       /* Cambia el cursor al pasar */
+}
+
+.caja-image {
+  width: 50px;          /* Ajusta al tamaño deseado */
+  height: auto;         /* Mantiene proporción */
+  transition: 0.2s;     /* Para efectos suaves */
+}
+
+/* Efecto hover (opcional) */
+.caja-button:hover .caja-image {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.caja-button:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.user-button {
+  display: inline-block; /* Para que respete dimensiones de la imagen */
+  border: none;          /* Elimina bordes por defecto */
+  background: none;      /* Fondo transparente */
+  padding: 0;            /* Elimina relleno */
+  cursor: pointer;       /* Cambia el cursor al pasar */
+}
+
+.user-image {
+  width: 50px;          /* Ajusta al tamaño deseado */
+  height: auto;         /* Mantiene proporción */
+  transition: 0.2s;     /* Para efectos suaves */
+}
+
+.user-button:hover .caja-image {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.user-button:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.logout-button {
+  display: inline-block; /* Para que respete dimensiones de la imagen */
+  border: none;          /* Elimina bordes por defecto */
+  background: none;      /* Fondo transparente */
+  padding: 0;            /* Elimina relleno */
+  cursor: pointer;       /* Cambia el cursor al pasar */
+}
+
+.logout-image {
+  width: 60px;          /* Ajusta al tamaño deseado */
+  height: auto;         /* Mantiene proporción */
+  transition: 0.2s;     /* Para efectos suaves */
+}
+
+/* Efecto hover (opcional) */
+.logout-button:hover .logout-image {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.logout-button:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.search-btn {
+  width: 70px;
+  height: 43px;
+}
+
+
+
+#btns-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 115px;
+  margin-bottom: 2.5rem;
+}
+
+.precio {
+  font: normal normal bold 49px/56px Arial;
+  color: #ff5600;
+}
+
+.lg-button {
+  width: 506px;
+  height: 176px;
+  font: normal normal bold 55px/64px Arial;
+  color: #2699fb;
+  border: 10px solid #bce0fd;
+  background: #bce0fd 0% 0% no-repeat padding-box;
+  box-shadow: inset 3px 3px 6px #ffffff88, 0px 10px 10px #0000000d;
+  border-radius: 24px;
+  cursor: pointer;
+}
+
+.lg-button:disabled {
+  background-color: #e0e0e0;
+  border-color: #cccccc;
+  color: #888888;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.lg-button:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+#ticket-container {
+  width: 1119px;
+  height: 254px;
+  padding: 1rem;
+  background: #ffffff 0% 0% no-repeat padding-box;
+  border: 2px solid #2599fb;
+  border-radius: 20px;
+}
+
+.ticket-text {
+  font: normal normal bold 20px/23px Arial;
+  color: #666666;
+}
+
+.ticket-voucher {
+  font: normal normal normal 20px/23px Arial;
+  color: #707070;
+}
+
+.img-qr {
+  position: relative;
+  bottom: 30px;
+  /* left: 170px; */
+  width: auto;
+  height: auto;
+  transition: transform 0.3s ease-in-out;
+}
+
+.img-qr img {
+  width: 180px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.img-qr-tk img {
+  width: 180px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  margin-bottom: 25px;
+}
+
+.img-close-btn {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  width: 76px;
+  height: auto;
+  cursor: pointer;
+}
+
+/* modal resumen tickets */
+
+#resumen-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  z-index: 9998;
+}
+
+#resumen-modal {
+  position: absolute;
+  top: 57px;
+  left: 85px;
+  width: 1196px;
+  height: 655px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.sales-summary {
+  position: relative;
+  background-color: white;
+  border: 3px solid #ff5600;
+  border-radius: 20px;
+  padding: 30px;
+  width: 100%;
+}
+
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.close-button:active {
+  transform: scale(0.96);
+}
+
+.title {
+  text-align: center;
+  color: #ff5600;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 12px 15px;
+  color: #666;
+  border-bottom: 1px solid #ddd;
+  font-weight: bold;
+}
+
+td {
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+.print-button {
+  width: 100%;
+  height: 100%;
+  background: none;
+  border: none;
+  color: #ff5600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.print-button:active {
+  color: #ff5600;
+  transform: scale(0.96);
+}
+
+/* modal ticket */
+
+#ticket-overlay,
+#ticket-print-overlay {
+  display: none;
+  position: fixed;
+  z-index: 1100;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  justify-content: center;
+  align-items: center;
+}
+
+#ticket-modal,
+#ticket-print-modal {
+  position: fixed;
+  top: 135px;
+  left: 405px;
+  width: 607px;
+  height: 416px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.ticket-info {
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.info-item {
+  text-align: center;
+  flex: 1;
+  min-width: 120px;
+  margin-bottom: 20px;
+}
+
+.info-label {
+  font-weight: bold;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.info-value {
+  font-size: 16px;
+}
+
+.qr-code {
+  display: flex;
+  justify-content: center;
+}
+
+.qr-image {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+}
+
+.button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* estilos personalizados sweet alert */
+.my-confirm-btn {
+  width: 200px;
+  font: normal normal bold 30px Arial;
+  color: #2699fb;
+  border: 5px solid #bce0fd;
+  background: #bce0fd 0% 0% no-repeat padding-box;
+  box-shadow: inset 3px 3px 6px #ffffff88, 0px 10px 10px #0000000d;
+  border-radius: 24px;
+  cursor: pointer;
+}
+
+.my-confirm-btn:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.alert-card {
+  box-shadow: 0px 0px 10px #00000029;
+  border-radius: 24px;
+}
+
+.swal-font {
+  font-family: Arial, sans-serif;
+}
+.swal2-container {
+  z-index: 10000 !important;
+}
+
+.swal-confirm-btn {
+  background-color: #4a6cf7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(74, 108, 247, 0.3);
+}
+
+.swal-confirm-btn:hover {
+  background-color: #3a5cd8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(74, 108, 247, 0.4);
+}
+
+.swal-confirm-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(74, 108, 247, 0.3);
+}
+
+/* Estilos para la tarjeta de alerta si no los tienes ya */
+.alert-card {
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.swal-font {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Selector de cantidad coherente con estilo Pullman */
+.cantidad-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(60px, 1fr));
+  gap: 15px;
+  justify-items: center;
+  margin-top: 20px;
+}
+
+.cantidad-btn {
+  font: normal normal bold 22px Arial;
+  padding: 12px 0;
+  width: 80px;
+  height: 50px;
+  border-radius: 24px;
+  border: 3px solid #ff5600;      /* Naranja Pullman */
+  background: #fff5f0;            /* Fondo claro */
+  color: #ff5600;                 /* Texto naranja */
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cantidad-btn:hover,
+.cantidad-btn.selected {
+  background: #ff5600;           /* Fondo naranja */
+  color: #ffffff;                /* Texto blanco */
+}
+
+.cantidad-manual {
+  margin-top: 20px;
+  font: normal normal bold 20px Arial;
+  text-align: center;
+  width: 120px;
+  height: 45px;
+  border: 3px solid #bce0fd;     /* Azul Pullman */
+  border-radius: 20px;
+  color: #2699fb;
+}
+
+.my-cancel-btn {
+  width: 200px;
+  font: normal normal bold 30px Arial;
+  color: #ff5600;                         /* Texto naranja */
+  border: 5px solid #ffd0b0;              /* Borde más claro */
+  background: #ffe5d6 0% 0% no-repeat padding-box; /* Fondo suave */
+  box-shadow: inset 3px 3px 6px #ffffff88, 0px 10px 10px #0000000d;
+  border-radius: 24px;
+  cursor: pointer;
+}
+
+.my-cancel-btn:active {
+  transform: scale(0.96);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+}

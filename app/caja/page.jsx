@@ -36,7 +36,7 @@ export default function CajaPage() {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [montoRetiro, setMontoRetiro] = useState('');
-  const [motivoRetiro, setMotivoRetiro] = useState('Retiro de efectivo');
+  const [motivoRetiro, setMotivoRetiro] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [loadingCaja, setLoadingCaja] = useState(true);
@@ -50,6 +50,7 @@ export default function CajaPage() {
   const adminUsernameRef = useRef(null);
   const adminPasswordRef = useRef(null);
   const montoRetiroRef = useRef(null);
+  const motivoRetiroRef = useRef(null);
 
   const numeroCajaEnv = process.env.NEXT_PUBLIC_NUMERO_CAJA || '77';
   // Proxy local — agrega el token automáticamente desde la cookie HttpOnly
@@ -93,6 +94,7 @@ export default function CajaPage() {
       setupTecladoInput(adminUsernameRef, setAdminUsername);
       setupTecladoInput(adminPasswordRef, setAdminPassword);
       setupTecladoInput(montoRetiroRef, setMontoRetiro);
+      setupTecladoInput(motivoRetiroRef, setMotivoRetiro);
     }
   };
 
@@ -968,7 +970,7 @@ export default function CajaPage() {
                 </thead>
                 <tbody>
                   {movimientos.length > 0 ? (
-                    movimientos.slice(0, 12).map((m) => {
+                    movimientos.slice(0, 11).map((m) => {
                       const esRet =
                         m.tipo_servicio === 'RETIRO' ||
                         (m.medio_pago && m.medio_pago.toLowerCase().includes('retiro'));
@@ -1169,13 +1171,13 @@ export default function CajaPage() {
                     />
                   </div>
                   <div className="form-group mb-3">
-                    <label>Motivo</label>
-                    <input
-                      type="text"
-                      className="form-control"
+                    <label>Observaciones</label>
+                    <textarea
+                      ref={motivoRetiroRef}
+                      className="form-control usar-teclado"
                       value={motivoRetiro}
                       onChange={(e) => setMotivoRetiro(e.target.value)}
-                      required
+                      rows={3}
                       autoComplete="off"
                     />
                   </div>

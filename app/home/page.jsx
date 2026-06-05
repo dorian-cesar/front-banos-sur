@@ -115,7 +115,7 @@ export default function HomePage() {
       msg.toLowerCase().includes("spawn") ||
       msg.toLowerCase().includes("enoent")
     ) {
-      return "Error al imprimir: Por favor, verifique que la impresora esté encendida, con papel y conectada al sistema, o que el servidor local de impresión esté activo.";
+      return "Error al imprimir: Por favor, verifique que la impresora esté encendida, con papel y conectada.";
     }
     return msg || "Ocurrió un error inesperado.";
   };

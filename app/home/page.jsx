@@ -107,6 +107,19 @@ export default function HomePage() {
     setShowModalPago(true);
   };
 
+  const obtenerMensajeErrorImpresion = (err) => {
+    const msg = err.message || "";
+    if (
+      msg.toLowerCase().includes("imprimir") ||
+      msg.toLowerCase().includes("printer") ||
+      msg.toLowerCase().includes("spawn") ||
+      msg.toLowerCase().includes("enoent")
+    ) {
+      return "Error al imprimir: Por favor, verifique que la impresora esté encendida, con papel y conectada al sistema, o que el servidor local de impresión esté activo.";
+    }
+    return msg || "Ocurrió un error inesperado.";
+  };
+
   const verificarSiExistePin = async (pin) => {
     const urlCheck = "https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/getUser.php";
     try {
@@ -537,7 +550,7 @@ export default function HomePage() {
       Swal.fire({
         icon: "error",
         title: "Error en la venta",
-        text: err.message || "No se pudo completar la emisión de boleta.",
+        text: obtenerMensajeErrorImpresion(err),
       });
     } finally {
       setSpinnerPago(false);
@@ -840,7 +853,7 @@ export default function HomePage() {
       Swal.fire({
         icon: "error",
         title: "Error al imprimir",
-        text: err.message || "No se pudo reimprimir el ticket.",
+        text: obtenerMensajeErrorImpresion(err),
       });
     } finally {
       setSpinnerPago(false);
@@ -1048,7 +1061,7 @@ export default function HomePage() {
       Swal.fire({
         icon: "error",
         title: "Error al imprimir",
-        text: err.message || "No se pudo reimprimir el ticket.",
+        text: obtenerMensajeErrorImpresion(err),
       });
     } finally {
       setSpinnerPago(false);

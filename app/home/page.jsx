@@ -382,6 +382,17 @@ export default function HomePage() {
             "",
           );
 
+          // Mandar a imprimir el ticket
+          await enviarImpresionTicket({
+            Codigo: codigoUnico,
+            hora,
+            fecha,
+            tipo,
+            valor: precioFinal,
+            qrBase64: cleanQrBase64,
+            folio: folioActual,
+          });
+
           // Guardar boleta
           await callApi({
             Codigo: codigoUnico,
@@ -412,17 +423,6 @@ export default function HomePage() {
           } catch (e) {
             console.error("Error al registrar en ZKTeco:", e);
           }
-
-          // Mandar a imprimir el ticket
-          await enviarImpresionTicket({
-            Codigo: codigoUnico,
-            hora,
-            fecha,
-            tipo,
-            valor: precioFinal,
-            qrBase64: cleanQrBase64,
-            folio: folioActual,
-          });
 
           ticketsImpresos++;
           ultimoCodigo = codigoUnico;
@@ -473,6 +473,17 @@ export default function HomePage() {
         const qrBase64 = await QRCode.toDataURL(codigoUnico, { margin: 1 });
         const cleanQrBase64 = qrBase64.replace(/^data:image\/png;base64,/, "");
 
+        // Mandar a imprimir el ticket
+        await enviarImpresionTicket({
+          Codigo: codigoUnico,
+          hora,
+          fecha,
+          tipo,
+          valor: precioFinal,
+          qrBase64: cleanQrBase64,
+          folio,
+        });
+
         // Guardar boleta
         await callApi({
           Codigo: codigoUnico,
@@ -503,17 +514,6 @@ export default function HomePage() {
         } catch (e) {
           console.error("Error al registrar en ZKTeco:", e);
         }
-
-        // Mandar a imprimir el ticket
-        await enviarImpresionTicket({
-          Codigo: codigoUnico,
-          hora,
-          fecha,
-          tipo,
-          valor: precioFinal,
-          qrBase64: cleanQrBase64,
-          folio,
-        });
 
         // Actualizar último boleto impreso en pantalla
         setUltimoBoleto({

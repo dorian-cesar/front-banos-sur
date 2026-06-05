@@ -159,8 +159,28 @@ export default function HomePage() {
   };
 
   const registerUserInZKTeco = async (codigo) => {
-    // Lógica para registrar en la controladora ZKTeco si existiera el SDK local
-    console.log(`Registrando en controladora local: ${codigo}`);
+    const urlBase = "https://andenes.terminal-calama.com";
+    try {
+      console.log(`Registrando en ZKTeco - Código: ${codigo}`);
+      
+      // 1. Agregar usuario
+      await fetch(`${urlBase}/TerminalCalama/PHP/Restroom/addUser.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: codigo, idNo: codigo }),
+      });
+
+      // 2. Asignar niveles de acceso
+      await fetch(`${urlBase}/TerminalCalama/PHP/Restroom/addLevelUser2.php`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: codigo }),
+      });
+
+      console.log(`ZKTeco: Código ${codigo} registrado exitosamente`);
+    } catch (e) {
+      console.warn("ZKTeco: no se pudo registrar acceso para", codigo, e);
+    }
   };
 
   const seleccionarCantidadTicketsAccesible = async () => {

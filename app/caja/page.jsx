@@ -986,6 +986,15 @@ export default function CajaPage() {
                         </tr>
                       );
                     })
+                  ) : loadingCaja ? (
+                    <tr>
+                      <td colSpan="7" className="text-center text-muted py-4">
+                        <div className="d-flex align-items-center justify-content-center gap-2">
+                          <div className="spinner-border spinner-border-sm text-primary" role="status"></div>
+                          <span>Cargando movimientos...</span>
+                        </div>
+                      </td>
+                    </tr>
                   ) : (
                     <tr>
                       <td colSpan="7" className="text-center text-muted py-4">No hay movimientos registrados.</td>

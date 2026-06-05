@@ -953,7 +953,7 @@ export default function CajaPage() {
           {/* Tabla Movimientos */}
           <div className="card shadow-sm border-0 rounded overflow-hidden">
             <div className="card-header bg-primary text-white py-3 fw-bold">Movimientos de Caja</div>
-            <div className="table-responsive" style={{ maxHeight: '500px' }}>
+            <div className="table-responsive">
               <table className="table table-hover table-striped align-middle mb-0">
                 <thead className="table-light text-center">
                   <tr>
@@ -968,7 +968,7 @@ export default function CajaPage() {
                 </thead>
                 <tbody>
                   {movimientos.length > 0 ? (
-                    movimientos.map((m) => {
+                    movimientos.slice(0, 8).map((m) => {
                       const esRet =
                         m.tipo_servicio === 'RETIRO' ||
                         (m.medio_pago && m.medio_pago.toLowerCase().includes('retiro'));

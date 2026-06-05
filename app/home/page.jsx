@@ -135,27 +135,68 @@ export default function HomePage() {
 
   const registrarMovimientoCaja = async (datos) => {
     const token = sessionStorage.getItem("authToken");
-    await fetch(`${backendUrl}/movimientos/registrar`, {
+    
+    // Buscar id_servicio
+    const servicio = servicios.find(
+      (s) => s.tipo.toLowerCase() === datos.tipo.toLowerCase()
+    );
+    const id_servicio = servicio ? servicio.id : null;
+
+    const payload = {
+      codigo: datos.codigo,
+      fecha: datos.fecha,
+      hora: datos.hora,
+      id_servicio: id_servicio,
+      monto: datos.valor,
+      medio_pago: datos.metodoPago,
+      numero_caja: parseInt(numeroCajaEnv),
+      id_usuario: datos.id_usuario,
+      id_aperturas_cierres: parseInt(datos.id_caja),
+      boleta: datos.boleta,
+    };
+
+    await fetch(`${backendUrl}/movimientos`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(datos),
+      body: JSON.stringify(payload),
     });
   };
 
   const callApi = async (datos) => {
-    // Registra la boleta en la nube
-    const token = sessionStorage.getItem("authToken");
-    await fetch(`${backendUrl}/boletas/guardar`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(datos),
-    });
+    // Registra la boleta en Calama
+    const urlCalama = "https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/save.php";
+    const id_caja = localStorage.getItem("id_aperturas_cierres");
+    const payload = {
+      ...datos,
+      id_caja: datos.id_caja ?? id_caja ?? null,
+    };
+
+    console.log("📦 Enviando datos a save.php:", payload);
+
+    try {
+      const response = await fetch(urlCalama, {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP ${response.status}`);
+      }
+
+      const result = await response.text();
+      console.log("✅ Respuesta del servidor Calama:", result);
+      return result;
+    } catch (error) {
+      console.error("❌ Error al enviar la solicitud a Calama:", error);
+      return null;
+    }
   };
 
   const registerUserInZKTeco = async (codigo) => {

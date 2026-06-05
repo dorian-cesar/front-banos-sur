@@ -804,7 +804,7 @@ export default function CajaPage() {
 
       Swal.fire({
         title: '¿Reimprimir último retiro?',
-        html: `Se reimprimirá el retiro de <strong>$${datosImpresion.monto.toLocaleString('es-CL')}</strong>.`,
+        html: `Se reimprimirá el retiro de <strong>$${datosImpresion.monto.toLocaleString('es-CL')}</strong> realizado a las ${datosImpresion.hora}.`,
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: 'Sí, reimprimir',

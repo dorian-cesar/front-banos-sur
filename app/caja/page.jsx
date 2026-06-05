@@ -948,15 +948,7 @@ export default function CajaPage() {
             <div className="alert alert-info">No hay ninguna caja abierta en este momento.</div>
           )}
 
-          {/* Resumen Totales */}
-          <div className="resumen-totales d-flex gap-3 mb-4 flex-wrap">
-            {totales.retiros > 0 && (
-              <div className="total-card retirado border-top border-danger p-3 bg-white rounded shadow-sm flex-fill" style={{ borderTopWidth: '4px !important' }}>
-                <div className="total-titulo text-muted mb-1">TOTAL RETIRADO</div>
-                <div className="total-valor text-danger fs-3 fw-bold">${totales.retiros.toLocaleString('es-CL')}</div>
-              </div>
-            )}
-          </div>
+
 
           {/* Tabla Movimientos */}
           <div className="card shadow-sm border-0 rounded overflow-hidden">

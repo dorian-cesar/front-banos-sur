@@ -112,6 +112,7 @@ export default function HomePage() {
     try {
       const response = await fetch(urlCheck, {
         method: "POST",
+        mode: "cors",
         headers: {
           "Content-Type": "application/json",
         },
@@ -241,6 +242,7 @@ export default function HomePage() {
       // 1. Agregar usuario
       await fetch(`${urlBase}/TerminalCalama/PHP/Restroom/addUser.php`, {
         method: "POST",
+        mode: "cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pin: codigo, idNo: codigo }),
       });
@@ -248,6 +250,7 @@ export default function HomePage() {
       // 2. Asignar niveles de acceso
       await fetch(`${urlBase}/TerminalCalama/PHP/Restroom/addLevelUser2.php`, {
         method: "POST",
+        mode: "cors",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pin: codigo }),
       });

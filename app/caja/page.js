@@ -920,18 +920,6 @@ export default function CajaPage() {
 
           {/* Resumen Totales */}
           <div className="resumen-totales d-flex gap-3 mb-4 flex-wrap">
-            <div className="total-card efectivo border-top border-success p-3 bg-white rounded shadow-sm flex-fill" style={{ borderTopWidth: '4px !important' }}>
-              <div className="total-titulo text-muted mb-1">TOTAL EFECTIVO</div>
-              <div className="total-valor text-success fs-3 fw-bold">${totales.efectivo.toLocaleString('es-CL')}</div>
-            </div>
-            <div className="total-card tarjeta border-top border-info p-3 bg-white rounded shadow-sm flex-fill" style={{ borderTopWidth: '4px !important' }}>
-              <div className="total-titulo text-muted mb-1">TOTAL TARJETA</div>
-              <div className="total-valor text-info fs-3 fw-bold">${totales.tarjeta.toLocaleString('es-CL')}</div>
-            </div>
-            <div className="total-card general border-top border-warning p-3 bg-white rounded shadow-sm flex-fill" style={{ borderTopWidth: '4px !important' }}>
-              <div className="total-titulo text-muted mb-1">BALANCE ACTUAL EFECTIVO</div>
-              <div className="total-valor text-warning fs-3 fw-bold">${totales.balance.toLocaleString('es-CL')}</div>
-            </div>
             {totales.retiros > 0 && (
               <div className="total-card retirado border-top border-danger p-3 bg-white rounded shadow-sm flex-fill" style={{ borderTopWidth: '4px !important' }}>
                 <div className="total-titulo text-muted mb-1">TOTAL RETIRADO</div>

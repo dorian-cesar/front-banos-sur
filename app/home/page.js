@@ -145,10 +145,70 @@ export default function HomePage() {
     console.log(`Registrando en controladora local: ${codigo}`);
   };
 
+  const seleccionarCantidadTicketsAccesible = async () => {
+    return Swal.fire({
+      title: "🖨️ ¿Cuántos boletos desea imprimir?",
+      html: `
+        <div class="cantidad-grid" aria-label="Opciones rápidas de cantidad">
+          <button type="button" class="cantidad-btn" data-value="5">5</button>
+          <button type="button" class="cantidad-btn" data-value="10">10</button>
+          <button type="button" class="cantidad-btn" data-value="15">15</button>
+          <button type="button" class="cantidad-btn" data-value="20">20</button>
+        </div>
+        <p style="margin-top:12px">O ingrese otra cantidad (máx. 25):</p>
+        <input id="cantidadManual" type="number" min="1" max="25" class="cantidad-manual" aria-label="Cantidad manual" />
+      `,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: "Aceptar",
+      cancelButtonText: "Cancelar",
+      customClass: {
+        popup: "alert-card",
+        title: "swal-font",
+        confirmButton: "my-confirm-btn",
+        cancelButton: "my-cancel-btn",
+      },
+      buttonsStyling: false,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        const grid = Swal.getHtmlContainer().querySelector(".cantidad-grid");
+        grid.querySelectorAll(".cantidad-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            grid
+              .querySelectorAll(".cantidad-btn")
+              .forEach((b) => b.classList.remove("selected"));
+            btn.classList.add("selected");
+          });
+        });
+        const manual = Swal.getHtmlContainer().querySelector("#cantidadManual");
+        manual.addEventListener("focus", () => {
+          grid
+            .querySelectorAll(".cantidad-btn")
+            .forEach((b) => b.classList.remove("selected"));
+        });
+      },
+      preConfirm: () => {
+        const manual = Number(
+          Swal.getHtmlContainer().querySelector("#cantidadManual").value
+        );
+        const selectedBtn = Swal.getHtmlContainer().querySelector(
+          ".cantidad-btn.selected"
+        );
+        const quick = selectedBtn ? Number(selectedBtn.dataset.value) : null;
+
+        if (manual && manual > 0 && manual <= 25) return manual;
+        if (quick && quick > 0) return quick;
+
+        Swal.showValidationMessage("Seleccione una cantidad válida (1 a 25).");
+        return false;
+      },
+    }).then((r) => (r.isConfirmed ? Number(r.value) : null));
+  };
+
   const continuarConPago = async (metodoPago) => {
     if (!datosPendientes) return;
 
-    setSpinnerPago(true);
     setShowModalPago(false);
 
     try {
@@ -158,86 +218,192 @@ export default function HomePage() {
       const idCaja = localStorage.getItem('id_aperturas_cierres');
       
       const { fecha, hora } = obtenerFechaHoraChile();
-      const codigoUnico = generarTokenNumerico();
 
-      // Solicitar Folio del SII al backend
-      const resFolio = await fetch(`${backendUrl}/boletas/enviar`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          nombre: tipo,
-          precio: Number(precioFinal),
-        }),
-      });
+      if (metodoPago === 'EFECTIVO_LOTE') {
+        const cantidad = await seleccionarCantidadTicketsAccesible();
+        if (!cantidad || cantidad <= 0) {
+          return;
+        }
 
-      const folioData = await resFolio.json();
-      if (!resFolio.ok || !folioData?.folio) {
-        throw new Error(folioData?.error || 'No se recibió folio del SII');
+        setSpinnerPago(true);
+
+        // Solicitar Folio Lote del SII al backend
+        const resLote = await fetch(`${backendUrl}/boletas/enviar-lote`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nombre: tipo,
+            precio: Number(precioFinal) || 0,
+            cantidad: Number(cantidad),
+            monto_total: (Number(precioFinal) || 0) * Number(cantidad),
+          }),
+        });
+
+        const loteData = await resLote.json();
+        if (!resLote.ok || !loteData?.folio) {
+          throw new Error(loteData?.error || 'No se recibió folio base de lote del SII');
+        }
+
+        const folioBase = loteData.folio.toString();
+
+        let ticketsImpresos = 0;
+        let ultimoCodigo = '';
+        let ultimoQrBase64 = '';
+
+        for (let i = 0; i < cantidad; i++) {
+          const codigoUnico = generarTokenNumerico();
+          const folioActual = `${folioBase}-${i + 1}`;
+
+          // Generar base64 del código QR usando librería nativa
+          const qrBase64 = await QRCode.toDataURL(codigoUnico, { margin: 1 });
+          const cleanQrBase64 = qrBase64.replace(/^data:image\/png;base64,/, '');
+
+          // Guardar boleta
+          await callApi({
+            Codigo: codigoUnico,
+            hora,
+            fecha,
+            tipo,
+            valor: precioFinal,
+            medio_pago: 'EFECTIVO_LOTE',
+          });
+
+          // Guardar movimiento de caja
+          await registrarMovimientoCaja({
+            codigo: codigoUnico,
+            fecha,
+            hora,
+            tipo,
+            valor: precioFinal,
+            metodoPago: 'EFECTIVO-LOTE',
+            estado_caja: 'abierta',
+            id_usuario: usuario.id,
+            id_caja: idCaja,
+            boleta: folioActual,
+          });
+
+          // Mandar a imprimir el ticket
+          await enviarImpresionTicket({
+            Codigo: codigoUnico,
+            hora,
+            fecha,
+            tipo,
+            valor: precioFinal,
+            qrBase64: cleanQrBase64,
+            folio: folioActual,
+          });
+
+          // Registrar en el control de acceso
+          await registerUserInZKTeco(codigoUnico);
+
+          ticketsImpresos++;
+          ultimoCodigo = codigoUnico;
+          ultimoQrBase64 = qrBase64;
+        }
+
+        // Actualizar último boleto impreso en pantalla con el último del lote
+        setUltimoBoleto({
+          codigo: ultimoCodigo,
+          tipo: `${tipo} (EFECTIVO-LOTE)`,
+          fecha,
+          hora,
+          qrBase64: ultimoQrBase64,
+        });
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Venta Realizada!',
+          text: `Se imprimieron ${ticketsImpresos} boletos correctamente.`,
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+      } else {
+        setSpinnerPago(true);
+        const codigoUnico = generarTokenNumerico();
+
+        // Solicitar Folio del SII al backend
+        const resFolio = await fetch(`${backendUrl}/boletas/enviar`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            nombre: tipo,
+            precio: Number(precioFinal),
+          }),
+        });
+
+        const folioData = await resFolio.json();
+        if (!resFolio.ok || !folioData?.folio) {
+          throw new Error(folioData?.error || 'No se recibió folio del SII');
+        }
+
+        const folio = folioData.folio.toString();
+
+        // Generar base64 del código QR usando librería nativa
+        const qrBase64 = await QRCode.toDataURL(codigoUnico, { margin: 1 });
+        const cleanQrBase64 = qrBase64.replace(/^data:image\/png;base64,/, '');
+
+        // Guardar boleta
+        await callApi({
+          Codigo: codigoUnico,
+          hora,
+          fecha,
+          tipo,
+          valor: precioFinal,
+          medio_pago: metodoPago,
+        });
+
+        // Guardar movimiento de caja
+        await registrarMovimientoCaja({
+          codigo: codigoUnico,
+          fecha,
+          hora,
+          tipo,
+          valor: precioFinal,
+          metodoPago,
+          estado_caja: 'abierta',
+          id_usuario: usuario.id,
+          id_caja: idCaja,
+          boleta: folio,
+        });
+
+        // Mandar a imprimir el ticket
+        await enviarImpresionTicket({
+          Codigo: codigoUnico,
+          hora,
+          fecha,
+          tipo,
+          valor: precioFinal,
+          qrBase64: cleanQrBase64,
+          folio,
+        });
+
+        // Registrar en el control de acceso
+        await registerUserInZKTeco(codigoUnico);
+
+        // Actualizar último boleto impreso en pantalla
+        setUltimoBoleto({
+          codigo: codigoUnico,
+          tipo: `${tipo} (${metodoPago})`,
+          fecha,
+          hora,
+          qrBase64,
+        });
+
+        Swal.fire({
+          icon: 'success',
+          title: '¡Venta Realizada!',
+          text: 'Ticket emitido e impreso.',
+          timer: 2000,
+          showConfirmButton: false,
+        });
       }
-
-      const folio = folioData.folio.toString();
-
-      // Generar base64 del código QR usando librería nativa
-      const qrBase64 = await QRCode.toDataURL(codigoUnico, { margin: 1 });
-      const cleanQrBase64 = qrBase64.replace(/^data:image\/png;base64,/, '');
-
-      // Guardar boleta
-      await callApi({
-        Codigo: codigoUnico,
-        hora,
-        fecha,
-        tipo,
-        valor: precioFinal,
-        medio_pago: metodoPago,
-      });
-
-      // Guardar movimiento de caja
-      await registrarMovimientoCaja({
-        codigo: codigoUnico,
-        fecha,
-        hora,
-        tipo,
-        valor: precioFinal,
-        metodoPago,
-        estado_caja: 'abierta',
-        id_usuario: usuario.id,
-        id_caja: idCaja,
-        boleta: folio,
-      });
-
-      // Mandar a imprimir el ticket
-      await enviarImpresionTicket({
-        Codigo: codigoUnico,
-        hora,
-        fecha,
-        tipo,
-        valor: precioFinal,
-        qrBase64: cleanQrBase64,
-        folio,
-      });
-
-      // Registrar en el control de acceso
-      await registerUserInZKTeco(codigoUnico);
-
-      // Actualizar último boleto impreso en pantalla
-      setUltimoBoleto({
-        codigo: codigoUnico,
-        tipo: `${tipo} (${metodoPago})`,
-        fecha,
-        hora,
-        qrBase64,
-      });
-
-      Swal.fire({
-        icon: 'success',
-        title: '¡Venta Realizada!',
-        text: 'Ticket emitido e impreso.',
-        timer: 2000,
-        showConfirmButton: false,
-      });
 
     } catch (err) {
       console.error(err);
@@ -439,53 +605,82 @@ export default function HomePage() {
             className="logo-pullman"
             style={{ height: '50px' }}
           />
-          <h1 style={{ fontSize: '1.8rem', color: '#ff6600', fontWeight: 'bold', margin: 0 }}>
-            MÓDULO DE CAJA BAÑOS (CAJA {numeroCajaEnv})
+          <h1 style={{ fontSize: '1.8rem', color: '#2699fb', fontWeight: 'bold', margin: 0 }}>
+            MODULO DE CAJA BAÑOS
           </h1>
           <img src="/images/wit@2x.png" alt="Logo Wit" className="logo-wit" style={{ height: '50px' }} />
         </nav>
       </header>
 
-      <main className="container-fluid p-4" style={{ backgroundColor: '#f1f9ff', minHeight: 'calc(100vh - 70px)' }}>
-        <div id="codigo-container" className="d-flex align-items-center gap-3 mb-4 flex-wrap justify-content-between">
-          <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: '500px' }}>
-            <input
-              type="text"
-              className="form-control usar-teclado"
-              placeholder="Número de ticket"
-              value={ticketInput}
-              onChange={(e) => setTicketInput(e.target.value)}
+      <main className="container-fluid px-4 pb-4 pt-0" style={{ backgroundColor: '#f1f9ff', minHeight: 'calc(100vh - 70px)' }}>
+        
+        {/* Top search & links bar */}
+        <div id="codigo-container">
+          <div className="codigo-input-container">
+            <img
+              className="input-icon"
+              src="/images/LUPA.svg"
+              alt="Search"
+              style={{ height: '16px' }}
             />
-            <button className="btn btn-warning text-white" onClick={handleBuscarTicket} disabled={loading}>
-              Verificar Ticket
-            </button>
+            <div className="input-container">
+              <input
+                type="text"
+                className="codigo-input usar-teclado"
+                placeholder="Número de ticket"
+                value={ticketInput}
+                onChange={(e) => setTicketInput(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div className="d-flex gap-2">
-            <button className="btn btn-primary" onClick={() => router.push('/caja')}>
-              Ver Caja
-            </button>
-            <button className="btn btn-danger" onClick={handleLogout}>
-              Cerrar Sesión
-            </button>
-          </div>
+          <button className="search-btn" onClick={handleBuscarTicket} disabled={loading}>
+            <img
+              src="/images/LUPA boton.svg"
+              alt="Search"
+              style={{ height: '20px' }}
+            />
+          </button>
+
+          <button className="sm-button" onClick={handleBuscarTicket} style={{ background: '#ff5600', borderColor: '#ff5600' }}>
+            VERIFICAR TICKET
+          </button>
+
+          <button className="caja-button" onClick={() => router.push('/caja')}>
+            <img
+              src="/images/cash-machine.png"
+              alt="Ir a caja"
+              className="caja-image"
+            />
+          </button>
+
+          <button className="user-button" onClick={() => router.push('/caja')}>
+            <img src="/images/user.svg" alt="Ir a usuario" className="user-image" />
+          </button>
+
+          <button className="logout-button" onClick={handleLogout}>
+            <img
+              src="/images/logout.png"
+              alt="Cerrar sesión"
+              className="logout-image"
+            />
+          </button>
         </div>
 
-        <h2 className="text-center mb-4 text-secondary">
+        <h2 className="text-center mb-4 text-secondary" style={{ color: '#2699fb', fontSize: '28px', fontWeight: 'bold' }}>
           Elija la opción según servicio, para imprimir Ticket.
         </h2>
 
         {/* Contenedor de Botones de Servicios */}
-        <div id="btns-container" className="d-flex justify-content-center gap-3 flex-wrap mb-5">
+        <div id="btns-container">
           {servicios.map((serv) => (
             <button
               key={serv.id}
-              className={`btn-genera-${serv.tipo.toLowerCase()} lg-button btn btn-warning p-4 text-white fs-4`}
-              style={{ minWidth: '220px', minHeight: '120px', borderRadius: '15px' }}
+              className="lg-button"
               onClick={() => handleSelectServicio(serv)}
             >
               {serv.nombre} <br />
-              <span className="precio font-weight-bold" style={{ fontSize: '1.2rem' }}>
+              <span className="precio">
                 ${parseFloat(serv.precio).toLocaleString('es-CL')}
               </span>
             </button>
@@ -493,42 +688,79 @@ export default function HomePage() {
         </div>
 
         {/* Último ticket impreso en pantalla */}
-        {ultimoBoleto.codigo && (
-          <div id="ticket-container" className="card p-4 mx-auto shadow-sm" style={{ maxWidth: '500px', backgroundColor: 'white' }}>
-            <h3 className="text-center mb-3 text-secondary">ÚLTIMO TICKET IMPRESO</h3>
-            <div className="row align-items-center">
-              <div className="col text-center">
-                <img src={ultimoBoleto.qrBase64} alt="QR" style={{ width: '150px', height: '150px' }} />
-              </div>
-              <div className="col">
-                <p className="mb-1"><strong>Código:</strong> {ultimoBoleto.codigo}</p>
-                <p className="mb-1"><strong>Servicio:</strong> {ultimoBoleto.tipo}</p>
-                <p className="mb-1"><strong>Fecha:</strong> {ultimoBoleto.fecha}</p>
-                <p className="mb-0"><strong>Hora:</strong> {ultimoBoleto.hora}</p>
-              </div>
+        <div id="ticket-container" className="mx-auto" style={{ border: '2px solid #2599fb', borderRadius: '20px', backgroundColor: '#ffffff' }}>
+          <div className="row h-100 align-items-center px-4">
+            <h3 className="text-center pb-2 w-100" style={{ color: '#2699fb', fontSize: '24px', fontWeight: 'bold', margin: '10px 0' }}>
+              ÚLTIMO TICKET y BOLETA IMPRESO
+            </h3>
+            
+            <div className="col-4 d-flex justify-content-center align-items-center">
+              {ultimoBoleto.qrBase64 ? (
+                <img src={ultimoBoleto.qrBase64} alt="QR" style={{ width: '150px', height: '150px', objectFit: 'contain' }} />
+              ) : (
+                <img src="/images/QR@2x.png" alt="Placeholder QR" style={{ width: '150px', height: '150px', objectFit: 'contain', opacity: 0.15 }} />
+              )}
+            </div>
+
+            <div className="col-4 ticket-text" style={{ fontSize: '20px', color: '#666666', fontWeight: 'bold', lineHeight: '1.8' }}>
+              <p className="m-0">CÓDIGO TICKET</p>
+              <p className="m-0">TIPO</p>
+              <p className="m-0">FECHA</p>
+              <p className="m-0">HORA</p>
+            </div>
+
+            <div className="col-4 ticket-text" style={{ fontSize: '20px', color: '#707070', lineHeight: '1.8' }}>
+              <p className="m-0" id="codigo">{ultimoBoleto.codigo || ''}</p>
+              <p className="m-0" id="tipo">{ultimoBoleto.tipo || ''}</p>
+              <p className="m-0" id="fecha">{ultimoBoleto.fecha || ''}</p>
+              <p className="m-0" id="hora">{ultimoBoleto.hora || ''}</p>
             </div>
           </div>
-        )}
+        </div>
       </main>
 
       {/* MODAL PAGO */}
       {showModalPago && (
-        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content shadow border-0 p-4">
-              <h3 className="text-center mb-4 text-primary">Seleccione método de pago</h3>
-              <div className="d-grid gap-2">
-                <button className="btn btn-success py-3 fs-5" onClick={() => continuarConPago('EFECTIVO')}>
-                  💵 Efectivo
-                </button>
-                <button className="btn btn-info text-white py-3 fs-5" onClick={() => continuarConPago('TARJETA')}>
-                  💳 Tarjeta
-                </button>
-              </div>
-              <button className="btn btn-outline-secondary mt-4 py-2" onClick={() => setShowModalPago(false)}>
-                Cancelar
-              </button>
-            </div>
+        <div
+          id="modalPago"
+          style={{
+            display: 'flex',
+            position: 'fixed',
+            zIndex: 9999,
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              padding: '20px 30px',
+              borderRadius: '10px',
+              textAlign: 'center',
+              width: '90%',
+              maxWidth: '400px',
+            }}
+          >
+            <h3 style={{ color: '#2699fb', fontWeight: 'bold', fontSize: '28px', marginBottom: '15px' }}>Selecciona método de pago</h3>
+            <button className="sm-button" style={{ margin: '10px' }} onClick={() => continuarConPago('EFECTIVO')}>
+              💵 Efectivo
+            </button>
+            <button className="sm-button" style={{ margin: '10px' }} onClick={() => continuarConPago('EFECTIVO_LOTE')}>
+              💵 Efectivo (por lote)
+            </button>
+            <br />
+            <button
+              onClick={() => setShowModalPago(false)}
+              className="sm-button"
+              style={{ marginTop: '15px' }}
+            >
+              Cancelar
+            </button>
           </div>
         </div>
       )}

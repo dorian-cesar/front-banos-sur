@@ -406,6 +406,13 @@ export default function HomePage() {
             boleta: folioActual,
           });
 
+          // Registrar en el control de acceso
+          try {
+            await registerUserInZKTeco(codigoUnico);
+          } catch (e) {
+            console.error("Error al registrar en ZKTeco:", e);
+          }
+
           // Mandar a imprimir el ticket
           await enviarImpresionTicket({
             Codigo: codigoUnico,
@@ -416,9 +423,6 @@ export default function HomePage() {
             qrBase64: cleanQrBase64,
             folio: folioActual,
           });
-
-          // Registrar en el control de acceso
-          await registerUserInZKTeco(codigoUnico);
 
           ticketsImpresos++;
           ultimoCodigo = codigoUnico;
@@ -493,6 +497,13 @@ export default function HomePage() {
           boleta: folio,
         });
 
+        // Registrar en el control de acceso
+        try {
+          await registerUserInZKTeco(codigoUnico);
+        } catch (e) {
+          console.error("Error al registrar en ZKTeco:", e);
+        }
+
         // Mandar a imprimir el ticket
         await enviarImpresionTicket({
           Codigo: codigoUnico,
@@ -503,9 +514,6 @@ export default function HomePage() {
           qrBase64: cleanQrBase64,
           folio,
         });
-
-        // Registrar en el control de acceso
-        await registerUserInZKTeco(codigoUnico);
 
         // Actualizar último boleto impreso en pantalla
         setUltimoBoleto({

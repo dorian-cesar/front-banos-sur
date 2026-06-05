@@ -121,7 +121,8 @@ export default function HomePage() {
   };
 
   const verificarSiExistePin = async (pin) => {
-    const urlCheck = "https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/getUser.php";
+    const urlCheck =
+      "https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/getUser.php";
     try {
       const response = await fetch(urlCheck, {
         method: "POST",
@@ -183,10 +184,10 @@ export default function HomePage() {
 
   const registrarMovimientoCaja = async (datos) => {
     const token = sessionStorage.getItem("authToken");
-    
+
     // Buscar id_servicio
     const servicio = servicios.find(
-      (s) => s.tipo.toLowerCase() === datos.tipo.toLowerCase()
+      (s) => s.tipo.toLowerCase() === datos.tipo.toLowerCase(),
     );
     const id_servicio = servicio ? servicio.id : null;
 
@@ -215,7 +216,8 @@ export default function HomePage() {
 
   const callApi = async (datos) => {
     // Registra la boleta en Calama
-    const urlCalama = "https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/save.php";
+    const urlCalama =
+      "https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/save.php";
     const id_caja = localStorage.getItem("id_aperturas_cierres");
     const payload = {
       ...datos,
@@ -251,7 +253,7 @@ export default function HomePage() {
     const urlBase = "https://andenes.terminal-calama.com";
     try {
       console.log(`Registrando en ZKTeco - Código: ${codigo}`);
-      
+
       // 1. Agregar usuario
       await fetch(`${urlBase}/TerminalCalama/PHP/Restroom/addUser.php`, {
         method: "POST",
@@ -284,7 +286,7 @@ export default function HomePage() {
           <button type="button" class="cantidad-btn" data-value="15">15</button>
           <button type="button" class="cantidad-btn" data-value="20">20</button>
         </div>
-        <p style="margin-top:12px">O ingrese otra cantidad (máx. 25):</p>
+        <p style="margin-top:12px; margin-bottom:6px;">O ingrese otra cantidad (máx. 25):</p>
         <input id="cantidadManual" type="number" min="1" max="25" class="cantidad-manual" aria-label="Cantidad manual" autocomplete="off" />
       `,
       focusConfirm: false,
@@ -1390,7 +1392,9 @@ export default function HomePage() {
             </button>
             <br />
             <button
-              onClick={() => !loading && !spinnerPago && setShowModalPago(false)}
+              onClick={() =>
+                !loading && !spinnerPago && setShowModalPago(false)
+              }
               className="sm-button"
               style={{ marginTop: "15px" }}
               disabled={loading || spinnerPago}

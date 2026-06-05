@@ -174,7 +174,7 @@ export default function HomePage() {
           <button type="button" class="cantidad-btn" data-value="20">20</button>
         </div>
         <p style="margin-top:12px">O ingrese otra cantidad (máx. 25):</p>
-        <input id="cantidadManual" type="number" min="1" max="25" class="cantidad-manual" aria-label="Cantidad manual" />
+        <input id="cantidadManual" type="number" min="1" max="25" class="cantidad-manual" aria-label="Cantidad manual" autocomplete="off" />
       `,
       focusConfirm: false,
       showCancelButton: true,
@@ -1036,6 +1036,7 @@ export default function HomePage() {
                 placeholder="Número de ticket"
                 value={ticketInput}
                 onChange={(e) => setTicketInput(e.target.value)}
+                autoComplete="off"
               />
             </div>
           </div>
@@ -1069,14 +1070,6 @@ export default function HomePage() {
             />
           </button>
 
-          <button className="user-button" onClick={() => router.push("/caja")}>
-            <img
-              src="/images/user.svg"
-              alt="Ir a usuario"
-              className="user-image"
-            />
-          </button>
-
           <button className="logout-button" onClick={handleLogout}>
             <img
               src="/images/logout.png"
@@ -1094,13 +1087,32 @@ export default function HomePage() {
         </h2>
 
         {/* Contenedor de Botones de Servicios */}
-        <div id="btns-container" style={{ minHeight: '176px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div
+          id="btns-container"
+          style={{
+            minHeight: "176px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           {loadingServicios ? (
             <div className="d-flex flex-column align-items-center justify-content-center">
-              <div className="spinner-border text-primary" style={{ width: '4rem', height: '4rem', borderWidth: '0.5rem', color: '#ff5600' }} role="status">
+              <div
+                className="spinner-border text-primary"
+                style={{
+                  width: "4rem",
+                  height: "4rem",
+                  borderWidth: "0.5rem",
+                  color: "#ff5600",
+                }}
+                role="status"
+              >
                 <span className="visually-hidden">Cargando...</span>
               </div>
-              <span className="mt-3 fs-5 fw-bold" style={{ color: '#ff5600' }}>Cargando servicios...</span>
+              <span className="mt-3 fs-5 fw-bold" style={{ color: "#ff5600" }}>
+                Cargando servicios...
+              </span>
             </div>
           ) : servicios.length > 0 ? (
             servicios.map((serv) => (
@@ -1116,7 +1128,9 @@ export default function HomePage() {
               </button>
             ))
           ) : (
-            <span className="fs-5 fw-bold" style={{ color: '#666666' }}>No hay servicios disponibles</span>
+            <span className="fs-5 fw-bold" style={{ color: "#666666" }}>
+              No hay servicios disponibles
+            </span>
           )}
         </div>
 

@@ -1027,6 +1027,7 @@ export default function CajaPage() {
                       onChange={(e) => setMontoInicial(e.target.value)}
                       placeholder="Ej: 10000"
                       required
+                      autoComplete="off"
                     />
                   </div>
                   <div className="form-group mb-3">
@@ -1163,6 +1164,7 @@ export default function CajaPage() {
                       onChange={(e) => setMontoRetiro(e.target.value)}
                       placeholder="Ej: 5000"
                       required
+                      autoComplete="off"
                     />
                   </div>
                   <div className="form-group mb-3">
@@ -1173,6 +1175,7 @@ export default function CajaPage() {
                       value={motivoRetiro}
                       onChange={(e) => setMotivoRetiro(e.target.value)}
                       required
+                      autoComplete="off"
                     />
                   </div>
                   <button type="submit" className="btn btn-info text-white w-100 py-2">Realizar Retiro</button>

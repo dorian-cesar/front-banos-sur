@@ -147,6 +147,7 @@ export default function LoginPage() {
               className="user-input usar-teclado"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
             />
           </div>
 
@@ -235,6 +236,7 @@ export default function LoginPage() {
                 value={emailRecuperar}
                 onChange={(e) => setEmailRecuperar(e.target.value)}
                 style={{ width: '100%', maxWidth: '300px' }}
+                autoComplete="email"
               />
             </div>
             <div className="text-center">

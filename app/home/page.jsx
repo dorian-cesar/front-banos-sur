@@ -1271,9 +1271,10 @@ export default function HomePage() {
             </button>
             <br />
             <button
-              onClick={() => setShowModalPago(false)}
+              onClick={() => !loading && !spinnerPago && setShowModalPago(false)}
               className="sm-button"
               style={{ marginTop: "15px" }}
+              disabled={loading || spinnerPago}
             >
               Cancelar
             </button>
@@ -1288,7 +1289,8 @@ export default function HomePage() {
             <div className="sales-summary">
               <button
                 className="close-button"
-                onClick={() => setShowModalTicket(false)}
+                onClick={() => !loading && setShowModalTicket(false)}
+                disabled={loading}
               >
                 <img
                   className="img-close-btn"
@@ -1365,7 +1367,8 @@ export default function HomePage() {
             <div className="sales-summary">
               <button
                 className="close-button"
-                onClick={() => setShowModalResumen(false)}
+                onClick={() => !loading && setShowModalResumen(false)}
+                disabled={loading}
               >
                 <img
                   className="img-close-btn"
@@ -1436,7 +1439,8 @@ export default function HomePage() {
             <div className="sales-summary">
               <button
                 className="close-button"
-                onClick={() => setShowModalPrint(false)}
+                onClick={() => !loading && setShowModalPrint(false)}
+                disabled={loading}
               >
                 <img
                   className="img-close-btn"

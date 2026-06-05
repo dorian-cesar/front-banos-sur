@@ -1013,7 +1013,7 @@ export default function CajaPage() {
             <div className="modal-content shadow border-0">
               <div className="modal-header bg-primary text-white">
                 <h5 className="modal-title">Iniciar Caja</h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setShowModalInicio(false)}></button>
+                <button type="button" className="btn-close btn-close-white" onClick={() => !loading && setShowModalInicio(false)} disabled={loading}></button>
               </div>
               <div className="modal-body">
                 <form onSubmit={handleAbrirCaja}>
@@ -1057,7 +1057,7 @@ export default function CajaPage() {
             <div className="modal-content shadow border-0">
               <div className="modal-header bg-warning">
                 <h5 className="modal-title text-dark">Autenticación Requerida para Cierre</h5>
-                <button type="button" className="btn-close" onClick={() => setShowModalAuthCierre(false)}></button>
+                <button type="button" className="btn-close" onClick={() => !loading && setShowModalAuthCierre(false)} disabled={loading}></button>
               </div>
               <div className="modal-body">
                 <form onSubmit={handleAuthCierre}>
@@ -1102,7 +1102,7 @@ export default function CajaPage() {
             <div className="modal-content shadow border-0">
               <div className="modal-header bg-warning">
                 <h5 className="modal-title text-dark">Autenticación de Administrador</h5>
-                <button type="button" className="btn-close" onClick={() => setShowModalAuthAdmin(false)}></button>
+                <button type="button" className="btn-close" onClick={() => !loading && setShowModalAuthAdmin(false)} disabled={loading}></button>
               </div>
               <div className="modal-body">
                 <form onSubmit={handleAuthAdmin}>
@@ -1147,7 +1147,7 @@ export default function CajaPage() {
             <div className="modal-content shadow border-0">
               <div className="modal-header bg-info text-white">
                 <h5 className="modal-title">Retirar Efectivo</h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setShowModalRetiro(false)}></button>
+                <button type="button" className="btn-close btn-close-white" onClick={() => !loading && setShowModalRetiro(false)} disabled={loading}></button>
               </div>
               <div className="modal-body">
                 <div className="alert alert-secondary py-2 mb-3">

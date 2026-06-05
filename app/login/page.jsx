@@ -215,11 +215,11 @@ export default function LoginPage() {
         id="modalRecuperar"
         className={`modal-recuperar${showModal ? ' show' : ''}`}
         onClick={(e) => {
-          if (e.target.id === 'modalRecuperar') setShowModal(false);
+          if (e.target.id === 'modalRecuperar' && !loading) setShowModal(false);
         }}
       >
         <div className="modal-content-recuperar">
-          <button className="modal-close" onClick={() => setShowModal(false)}>
+          <button className="modal-close" onClick={() => !loading && setShowModal(false)} disabled={loading}>
             &times;
           </button>
           <h2>Recuperar Contraseña</h2>

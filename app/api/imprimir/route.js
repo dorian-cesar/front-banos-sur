@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import ptp from 'pdf-to-printer';
+import { print } from 'pdf-to-printer';
 
 export async function POST(request) {
   try {
@@ -32,7 +32,7 @@ export async function POST(request) {
     console.log(`Enviando a imprimir archivo: ${tempFilePath} a la impresora: ${printerName || 'PREDETERMINADA'}`);
 
     // 4. Imprimir
-    await ptp.print(tempFilePath, options);
+    await print(tempFilePath, options);
 
     // 5. Limpiar archivo temporal de forma asíncrona
     try {

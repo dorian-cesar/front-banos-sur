@@ -107,9 +107,43 @@ export default function HomePage() {
     setShowModalPago(true);
   };
 
-  const generarTokenNumerico = () => {
-    // Genera un token numérico único de 6 a 8 dígitos similar al antiguo
-    return Math.floor(100000 + Math.random() * 900000).toString();
+  const verificarSiExistePin = async (pin) => {
+    const urlCheck = "https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/getUser.php";
+    try {
+      const response = await fetch(urlCheck, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ pin: pin }),
+      });
+      const result = await response.json();
+      return result.code === 0; // Si es 0, el PIN ya existe
+    } catch (error) {
+      console.error("Error al verificar pin en ZKTeco:", error);
+      return false; // Si falla la red, permitimos usarlo por seguridad
+    }
+  };
+
+  const generarTokenNumerico = async () => {
+    let existe = true;
+    let token = "";
+
+    while (existe) {
+      // Generar código de 6 dígitos
+      token = (Math.floor(Math.random() * 9) + 1).toString();
+      for (let i = 1; i < 6; i++) {
+        token += Math.floor(Math.random() * 10);
+      }
+
+      // Verificar si existe en ZKTeco
+      existe = await verificarSiExistePin(token);
+      if (existe) {
+        console.log(`⚠️ PIN ${token} ya ocupado en ZKTeco, buscando otro...`);
+      }
+    }
+
+    return token;
   };
 
   const obtenerFechaHoraChile = () => {
@@ -335,7 +369,7 @@ export default function HomePage() {
         let ultimoQrBase64 = "";
 
         for (let i = 0; i < cantidad; i++) {
-          const codigoUnico = generarTokenNumerico();
+          const codigoUnico = await generarTokenNumerico();
           const folioActual = `${folioBase}-${i + 1}`;
 
           // Generar base64 del código QR usando librería nativa
@@ -406,7 +440,7 @@ export default function HomePage() {
         });
       } else {
         setSpinnerPago(true);
-        const codigoUnico = generarTokenNumerico();
+        const codigoUnico = await generarTokenNumerico();
 
         // Solicitar Folio del SII al backend
         const resFolio = await fetch(`${backendUrl}/boletas/enviar`, {

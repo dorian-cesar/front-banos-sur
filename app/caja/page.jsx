@@ -968,7 +968,7 @@ export default function CajaPage() {
                 </thead>
                 <tbody>
                   {movimientos.length > 0 ? (
-                    movimientos.slice(0, 8).map((m) => {
+                    movimientos.slice(0, 12).map((m) => {
                       const esRet =
                         m.tipo_servicio === 'RETIRO' ||
                         (m.medio_pago && m.medio_pago.toLowerCase().includes('retiro'));

@@ -71,8 +71,16 @@ export default function LoginPage() {
         // Intentar restaurar caja si hay una abierta
         try {
           const numero_caja = process.env.NEXT_PUBLIC_NUMERO_CAJA || '77';
+          const token = result.token || '';
           const resCaja = await fetch(
-            `https://backend-banios.dev-wit.com/api/aperturas-cierres/u/${numero_caja}`
+            `https://backend-banios.dev-wit.com/api/aperturas-cierres/u/${numero_caja}`,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              }
+            }
           );
           if (resCaja.ok) {
             const cajaData = await resCaja.json();

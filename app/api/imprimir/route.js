@@ -37,7 +37,7 @@ export async function POST(request) {
     );
 
     // 4. Imprimir
-    await print(tempFilePath, options);
+    // await print(tempFilePath, options);
 
     // 5. Limpiar archivo temporal de forma asíncrona
     try {

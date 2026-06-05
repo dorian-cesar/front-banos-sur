@@ -1255,7 +1255,6 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Último ticket impreso en pantalla */}
         <div
           id="ticket-container"
           className="mx-auto"
@@ -1263,21 +1262,24 @@ export default function HomePage() {
             border: "2px solid #2599fb",
             borderRadius: "20px",
             backgroundColor: "#ffffff",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           }}
         >
-          <div className="row h-100 align-items-center px-4">
-            <h3
-              className="text-center w-100 m-0"
-              style={{
-                color: "#2699fb",
-                fontSize: "24px",
-                fontWeight: "bold",
-                margin: "10px 0",
-              }}
-            >
-              ÚLTIMO TICKET y BOLETA IMPRESA
-            </h3>
+          <h3
+            className="text-center w-100 m-0"
+            style={{
+              color: "#2699fb",
+              fontSize: "24px",
+              fontWeight: "bold",
+              marginTop: "10px",
+            }}
+          >
+            ÚLTIMO TICKET y BOLETA IMPRESA
+          </h3>
 
+          <div className="row flex-grow-1 align-items-center px-4" style={{ minHeight: "150px" }}>
             <div className="col-4 d-flex justify-content-center align-items-center">
               {ultimoBoleto.qrBase64 ? (
                 <img
@@ -1310,6 +1312,7 @@ export default function HomePage() {
                 color: "#666666",
                 fontWeight: "bold",
                 lineHeight: "1.8",
+                paddingLeft: "30px",
               }}
             >
               <p className="m-0">CÓDIGO TICKET</p>
@@ -1320,7 +1323,12 @@ export default function HomePage() {
 
             <div
               className="col-4 ticket-text"
-              style={{ fontSize: "20px", color: "#707070", lineHeight: "1.8" }}
+              style={{
+                fontSize: "20px",
+                color: "#707070",
+                lineHeight: "1.8",
+                paddingLeft: "10px",
+              }}
             >
               <p className="m-0" id="codigo">
                 {ultimoBoleto.codigo || ""}

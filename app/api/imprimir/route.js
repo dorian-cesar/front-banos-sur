@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import { print } from 'pdf-to-printer';
+import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
+import os from "os";
+import { print } from "pdf-to-printer";
 
 export async function POST(request) {
   try {
@@ -10,7 +10,10 @@ export async function POST(request) {
     const { pdfData, filename } = body;
 
     if (!pdfData) {
-      return NextResponse.json({ success: false, message: 'Falta pdfData' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Falta pdfData" },
+        { status: 400 },
+      );
     }
 
     // 1. Crear un path temporal
@@ -19,17 +22,19 @@ export async function POST(request) {
     const tempFilePath = path.join(tempDir, safeFilename);
 
     // 2. Escribir el archivo decodificando el Base64
-    const buffer = Buffer.from(pdfData, 'base64');
+    const buffer = Buffer.from(pdfData, "base64");
     fs.writeFileSync(tempFilePath, buffer);
 
     // 3. Obtener la impresora configurada
-    const printerName = process.env.PRINTER_NAME || '';
+    const printerName = process.env.PRINTER_NAME || "";
     const options = {};
-    if (printerName.trim() !== '') {
+    if (printerName.trim() !== "") {
       options.printer = printerName.trim();
     }
 
-    console.log(`Enviando a imprimir archivo: ${tempFilePath} a la impresora: ${printerName || 'PREDETERMINADA'}`);
+    console.log(
+      `Enviando a imprimir archivo: ${tempFilePath} a la impresora: ${printerName || "PREDETERMINADA"}`,
+    );
 
     // 4. Imprimir
     await print(tempFilePath, options);
@@ -38,15 +43,21 @@ export async function POST(request) {
     try {
       fs.unlinkSync(tempFilePath);
     } catch (err) {
-      console.error('No se pudo eliminar el archivo temporal:', err);
+      console.error("No se pudo eliminar el archivo temporal:", err);
     }
 
-    return NextResponse.json({ success: true, message: 'Impresión enviada correctamente a la cola.' });
+    return NextResponse.json({
+      success: true,
+      message: "Impresión enviada correctamente a la cola.",
+    });
   } catch (error) {
-    console.error('Error en API de impresión local:', error);
-    return NextResponse.json({ 
-      success: false, 
-      message: 'Error al imprimir en el servidor local: ' + error.message 
-    }, { status: 500 });
+    console.error("Error en API de impresión local:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Error al imprimir en el servidor local: " + error.message,
+      },
+      { status: 500 },
+    );
   }
 }

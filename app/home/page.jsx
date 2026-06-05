@@ -1056,8 +1056,9 @@ export default function HomePage() {
             className="sm-button"
             onClick={handleVerificarTicket}
             style={{ background: "#ff5600", borderColor: "#ff5600" }}
+            disabled={loading}
           >
-            VERIFICAR TICKET
+            {loading ? "Cargando..." : "VERIFICAR TICKET"}
           </button>
 
           <button className="caja-button" onClick={() => router.push("/caja")}>

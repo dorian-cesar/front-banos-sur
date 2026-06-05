@@ -180,6 +180,8 @@ export default function CajaPage() {
       return;
     }
 
+    setLoading(true);
+
     try {
       const user = JSON.parse(sessionStorage.getItem('usuario'));
       const response = await fetch(`${backendUrl}/aperturas-cierres/abrir`, {
@@ -228,6 +230,8 @@ export default function CajaPage() {
         title: 'Error',
         text: 'Error de conexión con el servidor.',
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -307,6 +311,14 @@ export default function CajaPage() {
       cancelButtonText: 'Cancelar',
     }).then(async (result) => {
       if (result.isConfirmed) {
+        Swal.fire({
+          title: 'Cerrando caja...',
+          text: 'Por favor espere, se está registrando el cierre e imprimiendo el comprobante.',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+        });
         try {
           const user = JSON.parse(sessionStorage.getItem('usuario'));
           const response = await fetch(`${backendUrl}/aperturas-cierres/cerrar`, {
@@ -521,6 +533,14 @@ export default function CajaPage() {
       cancelButtonText: 'Cancelar',
     }).then(async (result) => {
       if (result.isConfirmed) {
+        Swal.fire({
+          title: 'Realizando retiro...',
+          text: 'Por favor espere, se está registrando el retiro y generando los comprobantes.',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+        });
         try {
           const user = JSON.parse(sessionStorage.getItem('usuario'));
           const response = await fetch(`${backendUrl}/aperturas-cierres/retiro`, {
@@ -1009,7 +1029,9 @@ export default function CajaPage() {
                       onChange={(e) => setObservacionesCaja(e.target.value)}
                     ></textarea>
                   </div>
-                  <button type="submit" className="btn btn-primary w-100 py-2">Abrir Caja</button>
+                  <button type="submit" className="btn btn-primary w-100 py-2" disabled={loading}>
+                    {loading ? 'Abriendo caja...' : 'Abrir Caja'}
+                  </button>
                 </form>
               </div>
             </div>

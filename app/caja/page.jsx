@@ -39,6 +39,7 @@ export default function CajaPage() {
   const [motivoRetiro, setMotivoRetiro] = useState('Retiro de efectivo');
 
   const [loading, setLoading] = useState(false);
+  const [loadingCaja, setLoadingCaja] = useState(true);
   const [adminAutorizado, setAdminAutorizado] = useState(null);
 
   // Refs para inputs y teclado
@@ -140,9 +141,11 @@ export default function CajaPage() {
       setDatosCaja(null);
       setMovimientos([]);
       calcularTotales([], 0);
+      setLoadingCaja(false);
       return;
     }
 
+    setLoadingCaja(true);
     try {
       // 1. Obtener detalles de apertura de caja
       const resCaja = await fetch(`${backendUrl}/aperturas-cierres/${idAperturaCierre}`);
@@ -166,6 +169,8 @@ export default function CajaPage() {
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoadingCaja(false);
     }
   };
 
@@ -925,7 +930,12 @@ export default function CajaPage() {
         {/* Contenido principal */}
         <main className="content flex-grow-1 p-4" style={{ backgroundColor: '#f1f9ff' }}>
           {/* Card Info Caja Abierta */}
-          {cajaAbierta && datosCaja ? (
+          {loadingCaja ? (
+            <div className="alert alert-warning d-flex align-items-center gap-2">
+              <div className="spinner-border spinner-border-sm text-warning" role="status"></div>
+              <span>Verificando estado de la caja...</span>
+            </div>
+          ) : cajaAbierta && datosCaja ? (
             <div className="card shadow-sm border-primary mb-4">
               <div className="card-body">
                 <h5 className="card-title mb-2">Caja Abierta por: {usuario?.username}</h5>

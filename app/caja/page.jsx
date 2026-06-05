@@ -1069,6 +1069,7 @@ export default function CajaPage() {
                       value={cierreUsername}
                       onChange={(e) => setCierreUsername(e.target.value)}
                       required
+                      autoComplete="username"
                     />
                   </div>
                   <div className="mb-3">
@@ -1080,6 +1081,7 @@ export default function CajaPage() {
                       value={cierrePassword}
                       onChange={(e) => setCierrePassword(e.target.value)}
                       required
+                      autoComplete="current-password"
                     />
                   </div>
                   <button type="submit" className="btn btn-warning w-100 py-2" disabled={loading}>
@@ -1112,6 +1114,7 @@ export default function CajaPage() {
                       value={adminUsername}
                       onChange={(e) => setAdminUsername(e.target.value)}
                       required
+                      autoComplete="username"
                     />
                   </div>
                   <div className="mb-3">
@@ -1123,6 +1126,7 @@ export default function CajaPage() {
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
                       required
+                      autoComplete="current-password"
                     />
                   </div>
                   <button type="submit" className="btn btn-warning w-100 py-2" disabled={loading}>

@@ -68,32 +68,7 @@ export default function LoginPage() {
           sessionStorage.setItem('authToken', result.token);
         }
 
-        // Intentar restaurar caja si hay una abierta
-        try {
-          const numero_caja = process.env.NEXT_PUBLIC_NUMERO_CAJA || '77';
-          const token = result.token || '';
-          const resCaja = await fetch(
-            `https://backend-banios.dev-wit.com/api/aperturas-cierres/u/${numero_caja}`,
-            {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              }
-            }
-          );
-          if (resCaja.ok) {
-            const cajaData = await resCaja.json();
-            if (cajaData && cajaData.id && cajaData.estado !== 'cerrada') {
-              localStorage.setItem('id_aperturas_cierres', cajaData.id);
-              localStorage.setItem('estado_caja', 'abierta');
-              localStorage.setItem('numero_caja', cajaData.numero_caja);
-              localStorage.setItem('id_usuario_apertura', cajaData.id_usuario_apertura);
-            }
-          }
-        } catch (err) {
-          console.error('Error al restaurar estado de la caja:', err);
-        }
+
 
         router.push('/home');
       } else {

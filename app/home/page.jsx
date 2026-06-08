@@ -717,6 +717,9 @@ export default function HomePage() {
       );
       const dataEstado = await resEstado.json();
       let estadoTicket = dataEstado.message || "No encontrado";
+      if (dataEstado.error) {
+        estadoTicket = "BOLETO SIN USAR";
+      }
       estadoTicket = estadoTicket.toUpperCase().replace(/\.$/, "");
 
       if (ticket) {
@@ -932,6 +935,9 @@ export default function HomePage() {
       );
       const dataEstado = await resEstado.json();
       let estadoTicket = dataEstado.message || "No encontrado";
+      if (dataEstado.error) {
+        estadoTicket = "BOLETO SIN USAR";
+      }
       estadoTicket = estadoTicket.toUpperCase().replace(/\.$/, "");
 
       const qrBase64 = await QRCode.toDataURL(item.Codigo, { margin: 1 });

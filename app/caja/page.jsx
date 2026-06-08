@@ -883,15 +883,15 @@ export default function CajaPage() {
           </h1>
           
           <button
-            className="btn btn-primary w-100 mb-3"
+            className="btn w-100 mb-3"
             onClick={() => setShowModalInicio(true)}
-            disabled={cajaAbierta}
+            disabled={cajaAbierta || loadingCaja}
           >
             Abrir Caja
           </button>
           
           <button
-            className="btn btn-primary w-100 mb-3"
+            className="btn w-100 mb-3"
             onClick={() => setShowModalAuthCierre(true)}
             disabled={!cajaAbierta}
           >
@@ -899,14 +899,14 @@ export default function CajaPage() {
           </button>
 
           <button
-            className="btn btn-primary w-100 mb-3"
+            className="btn w-100 mb-3"
             onClick={cargarCaja}
           >
             Actualizar Movimientos
           </button>
 
           <button
-            className="btn btn-primary w-100 mb-3"
+            className="btn w-100 mb-3"
             onClick={() => setShowModalAuthAdmin(true)}
             disabled={!cajaAbierta}
           >
@@ -914,7 +914,7 @@ export default function CajaPage() {
           </button>
 
           <button
-            className="btn btn-primary w-100 mb-3"
+            className="btn w-100 mb-3"
             onClick={handleReimprimirRetiro}
             disabled={!cajaAbierta}
           >
@@ -922,7 +922,7 @@ export default function CajaPage() {
           </button>
 
           <button
-            className="btn btn-secondary w-100 mb-3"
+            className="btn w-100 mb-3"
             onClick={() => router.push('/home')}
           >
             Volver
@@ -1043,7 +1043,7 @@ export default function CajaPage() {
                       onChange={(e) => setObservacionesCaja(e.target.value)}
                     ></textarea>
                   </div>
-                  <button type="submit" className="btn btn-primary w-100 py-2" disabled={loading}>
+                  <button type="submit" className="btn w-100 py-2" disabled={loading}>
                     {loading ? 'Abriendo caja...' : 'Abrir Caja'}
                   </button>
                 </form>
@@ -1181,7 +1181,7 @@ export default function CajaPage() {
                       autoComplete="off"
                     />
                   </div>
-                  <button type="submit" className="btn btn-info text-white w-100 py-2">Realizar Retiro</button>
+                  <button type="submit" className="btn w-100 py-2">Realizar Retiro</button>
                 </form>
               </div>
             </div>

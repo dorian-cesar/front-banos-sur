@@ -1,36 +1,44 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Script from 'next/script';
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Script from "next/script";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [numeroCaja, setNumeroCaja] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [emailRecuperar, setEmailRecuperar] = useState('');
+  const [emailRecuperar, setEmailRecuperar] = useState("");
   const router = useRouter();
 
   const emailInputRef = useRef(null);
   const passwordInputRef = useRef(null);
+  const numeroCajaRef = useRef(null);
   const emailRecuperarRef = useRef(null);
 
   useEffect(() => {
-    const user = sessionStorage.getItem('usuario');
-    if (user) {
-      router.push('/home');
+    if (typeof window !== "undefined") {
+      const savedCaja = localStorage.getItem("numero_caja");
+      if (savedCaja) {
+        setNumeroCaja(savedCaja);
+      }
+      const user = sessionStorage.getItem("usuario");
+      if (user) {
+        router.push("/home");
+      }
     }
   }, [router]);
 
   const handleTecladoInit = () => {
-    if (typeof window !== 'undefined' && window.tecladoVirtual) {
+    if (typeof window !== "undefined" && window.tecladoVirtual) {
       window.tecladoVirtual.init();
 
       const setupKeyboard = (inputEl, setter) => {
         if (!inputEl) return;
-        inputEl.addEventListener('focus', () => {
+        inputEl.addEventListener("focus", () => {
           window.tecladoVirtual.show(inputEl);
           const interval = setInterval(() => {
             if (inputEl === document.activeElement) {
@@ -44,6 +52,7 @@ export default function LoginPage() {
 
       setupKeyboard(emailInputRef.current, setEmail);
       setupKeyboard(passwordInputRef.current, setPassword);
+      setupKeyboard(numeroCajaRef.current, setNumeroCaja);
       setupKeyboard(emailRecuperarRef.current, setEmailRecuperar);
     }
   };
@@ -54,29 +63,28 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       const result = await response.json();
 
       if (response.ok && result.success) {
-        sessionStorage.setItem('usuario', JSON.stringify(result.user));
+        sessionStorage.setItem("usuario", JSON.stringify(result.user));
         if (result.token) {
-          sessionStorage.setItem('authToken', result.token);
+          sessionStorage.setItem("authToken", result.token);
         }
+        localStorage.setItem("numero_caja", numeroCaja);
 
-
-
-        router.push('/home');
+        router.push("/home");
       } else {
-        alert(result.error || 'Credenciales incorrectas.');
+        alert(result.error || "Credenciales incorrectas.");
       }
     } catch (err) {
       console.error(err);
-      alert('Ocurrió un error en el servidor.');
+      alert("Ocurrió un error en el servidor.");
     } finally {
       setLoading(false);
     }
@@ -84,14 +92,14 @@ export default function LoginPage() {
 
   const handleRecuperar = async (e) => {
     e.preventDefault();
-    alert('Se enviará un correo a: ' + emailRecuperar);
+    alert("Se enviará un correo a: " + emailRecuperar);
     setShowModal(false);
   };
 
   const apagarSistema = () => {
-    if (confirm('¿Estás seguro que deseas apagar el sistema?')) {
-      fetch('/api/apagar', { method: 'POST' }).catch((err) => {
-        alert('No se pudo apagar el sistema: ' + err.message);
+    if (confirm("¿Estás seguro que deseas apagar el sistema?")) {
+      fetch("/api/apagar", { method: "POST" }).catch((err) => {
+        alert("No se pudo apagar el sistema: " + err.message);
       });
     }
   };
@@ -121,6 +129,20 @@ export default function LoginPage() {
           <h2 className="login-title">Iniciar Sesión</h2>
 
           <div className="form-group">
+            <label>Número de Caja</label>
+            <input
+              ref={numeroCajaRef}
+              type="text"
+              id="numeroCaja"
+              required
+              className="user-input usar-teclado"
+              value={numeroCaja}
+              onChange={(e) => setNumeroCaja(e.target.value)}
+              autoComplete="on"
+            />
+          </div>
+
+          <div className="form-group">
             <label>Usuario</label>
             <input
               ref={emailInputRef}
@@ -139,7 +161,7 @@ export default function LoginPage() {
             <div className="password-wrapper">
               <input
                 ref={passwordInputRef}
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 id="password"
                 required
                 className="user-input usar-teclado"
@@ -149,19 +171,25 @@ export default function LoginPage() {
               <button
                 type="button"
                 id="togglePassword"
-                className={`toggle-password${showPassword ? ' active' : ''}`}
+                className={`toggle-password${showPassword ? " active" : ""}`}
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label="Mostrar/Ocultar contraseña"
                 aria-pressed={String(showPassword)}
               >
                 <svg id="iconEye" viewBox="0 0 24 24" aria-hidden="true">
                   {/* OJO ABIERTO */}
-                  <g className="eye-open" style={{ display: showPassword ? 'none' : 'inline' }}>
+                  <g
+                    className="eye-open"
+                    style={{ display: showPassword ? "none" : "inline" }}
+                  >
                     <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
                     <circle cx="12" cy="12" r="3" />
                   </g>
                   {/* OJO CERRADO */}
-                  <g className="eye-closed" style={{ display: showPassword ? 'inline' : 'none' }}>
+                  <g
+                    className="eye-closed"
+                    style={{ display: showPassword ? "inline" : "none" }}
+                  >
                     <path d="M9.9 4.24A10.94 10.94 0 0112 5c7 0 11 7 11 7a22.05 22.05 0 01-5.08 5.96" />
                     <path d="M17.94 17.94A10.94 10.94 0 0112 19c-7 0-11-7-11-7a22.05 22.05 0 015.08-5.96" />
                     <path d="M1 1L23 23" />
@@ -173,8 +201,12 @@ export default function LoginPage() {
           </div>
 
           <div className="text-center">
-            <button type="submit" className="ingresar-button" disabled={loading}>
-              {loading ? 'Verificando...' : 'Ingresar'}
+            <button
+              type="submit"
+              className="ingresar-button"
+              disabled={loading}
+            >
+              {loading ? "Verificando..." : "Ingresar"}
             </button>
           </div>
 
@@ -196,19 +228,29 @@ export default function LoginPage() {
       {/* Modal recuperar contraseña */}
       <div
         id="modalRecuperar"
-        className={`modal-recuperar${showModal ? ' show' : ''}`}
+        className={`modal-recuperar${showModal ? " show" : ""}`}
         onClick={(e) => {
-          if (e.target.id === 'modalRecuperar' && !loading) setShowModal(false);
+          if (e.target.id === "modalRecuperar" && !loading) setShowModal(false);
         }}
       >
         <div className="modal-content-recuperar">
-          <button className="modal-close" onClick={() => !loading && setShowModal(false)} disabled={loading}>
+          <button
+            className="modal-close"
+            onClick={() => !loading && setShowModal(false)}
+            disabled={loading}
+          >
             &times;
           </button>
           <h2>Recuperar Contraseña</h2>
-          <p>Te enviaremos un correo con un enlace para reestablecer tu contraseña.</p>
+          <p>
+            Te enviaremos un correo con un enlace para reestablecer tu
+            contraseña.
+          </p>
           <form id="formRecuperar" onSubmit={handleRecuperar}>
-            <div className="form-group" style={{ display: 'flex', justifyContent: 'center' }}>
+            <div
+              className="form-group"
+              style={{ display: "flex", justifyContent: "center" }}
+            >
               <input
                 ref={emailRecuperarRef}
                 type="email"
@@ -218,7 +260,7 @@ export default function LoginPage() {
                 placeholder="Correo electrónico"
                 value={emailRecuperar}
                 onChange={(e) => setEmailRecuperar(e.target.value)}
-                style={{ width: '100%', maxWidth: '300px' }}
+                style={{ width: "100%", maxWidth: "300px" }}
                 autoComplete="email"
               />
             </div>
@@ -234,25 +276,25 @@ export default function LoginPage() {
       {/* Botones totem (inferior izquierda) */}
       <div
         style={{
-          position: 'fixed',
-          bottom: '10px',
-          left: '10px',
+          position: "fixed",
+          bottom: "10px",
+          left: "10px",
           zIndex: 1000,
-          display: 'flex',
-          gap: '10px',
+          display: "flex",
+          gap: "10px",
         }}
       >
         <button
           onClick={apagarSistema}
           className="btn btn-danger"
           style={{
-            background: '#dc3545',
-            color: 'white',
-            border: 'none',
-            margin: '4px',
-            padding: '4px 16px',
-            borderRadius: '4px',
-            cursor: 'pointer',
+            background: "#dc3545",
+            color: "white",
+            border: "none",
+            margin: "4px",
+            padding: "4px 16px",
+            borderRadius: "4px",
+            cursor: "pointer",
           }}
         >
           Apagar
@@ -260,8 +302,10 @@ export default function LoginPage() {
         <button
           onClick={recargarYLimpiarStorage}
           className="btn-reload"
-          onMouseOver={(e) => (e.currentTarget.style.transform = 'rotate(45deg)')}
-          onMouseOut={(e) => (e.currentTarget.style.transform = 'rotate(0deg)')}
+          onMouseOver={(e) =>
+            (e.currentTarget.style.transform = "rotate(45deg)")
+          }
+          onMouseOut={(e) => (e.currentTarget.style.transform = "rotate(0deg)")}
           aria-label="Reiniciar sesión"
         >
           <svg
@@ -286,13 +330,13 @@ export default function LoginPage() {
       <div
         id="tecladoContainer"
         style={{
-          display: 'none',
-          position: 'fixed',
+          display: "none",
+          position: "fixed",
           bottom: 0,
-          width: '100%',
+          width: "100%",
           zIndex: 1001,
-          background: '#fff',
-          boxShadow: '0 -2px 10px rgba(0,0,0,0.3)',
+          background: "#fff",
+          boxShadow: "0 -2px 10px rgba(0,0,0,0.3)",
         }}
       >
         <div className="simple-keyboard"></div>
@@ -302,8 +346,8 @@ export default function LoginPage() {
         src="https://cdnjs.cloudflare.com/ajax/libs/simple-keyboard/3.8.67/index.min.js"
         strategy="lazyOnload"
         onLoad={() => {
-          const script = document.createElement('script');
-          script.src = '/js/teclado.js';
+          const script = document.createElement("script");
+          script.src = "/js/teclado.js";
           script.onload = handleTecladoInit;
           document.body.appendChild(script);
         }}

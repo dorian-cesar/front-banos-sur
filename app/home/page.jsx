@@ -42,7 +42,7 @@ export default function HomePage() {
   const [showModalPago, setShowModalPago] = useState(false);
   const [datosPendientes, setDatosPendientes] = useState(null);
 
-  const numeroCajaEnv = process.env.NEXT_PUBLIC_NUMERO_CAJA || "77";
+  const [numeroCaja, setNumeroCaja] = useState("");
   // Proxy local — agrega el token automáticamente desde la cookie HttpOnly
   const backendUrl = "/api/proxy";
 
@@ -55,6 +55,9 @@ export default function HomePage() {
       }
       setUsuario(JSON.parse(userRaw));
 
+      const savedCaja = localStorage.getItem("numero_caja") || "";
+      setNumeroCaja(savedCaja);
+
       const estado = localStorage.getItem("estado_caja");
       setCajaAbierta(estado === "abierta");
 
@@ -62,7 +65,7 @@ export default function HomePage() {
       const token = sessionStorage.getItem("authToken") || "";
       if (token) {
         fetch(
-          `https://backend-banios.dev-wit.com/api/aperturas-cierres/u/${numeroCajaEnv}`,
+          `https://backend-banios.dev-wit.com/api/aperturas-cierres/u/${savedCaja}`,
           {
             method: "GET",
             headers: {
@@ -73,7 +76,7 @@ export default function HomePage() {
         )
           .then((res) => {
             if (res.ok) return res.json();
-            throw new Error("No se pudo restaurar");
+            throw new Error("caja_invalida");
           })
           .then((cajaData) => {
             if (cajaData && cajaData.id && cajaData.estado !== "cerrada") {
@@ -85,10 +88,34 @@ export default function HomePage() {
                 cajaData.id_usuario_apertura,
               );
               setCajaAbierta(true);
+            } else {
+              // Si no hay sesión activa en el servidor, limpiar el estado local
+              localStorage.setItem("estado_caja", "cerrada");
+              setCajaAbierta(false);
             }
           })
           .catch((err) => {
-            console.error("Error al restaurar estado de la caja:", err);
+            if (err.message === "caja_invalida") {
+              Swal.fire({
+                icon: "error",
+                title: "Número de Caja Inválido",
+                text: "El número de caja ingresado no existe o no es válido. Por favor, inicie sesión nuevamente con un número de caja correcto.",
+                confirmButtonText: "Aceptar",
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+              }).then(async () => {
+                try {
+                  await fetch("/api/auth/logout", { method: "POST" });
+                } catch (e) {
+                  console.error("Error al cerrar sesión:", e);
+                }
+                sessionStorage.clear();
+                localStorage.removeItem("numero_caja");
+                router.push("/login");
+              });
+            } else {
+              console.error("Error al restaurar estado de la caja:", err);
+            }
           });
       }
 
@@ -236,7 +263,7 @@ export default function HomePage() {
       id_servicio: id_servicio,
       monto: datos.valor,
       medio_pago: datos.metodoPago,
-      numero_caja: parseInt(numeroCajaEnv),
+      numero_caja: parseInt(numeroCaja),
       id_usuario: datos.id_usuario,
       id_aperturas_cierres: parseInt(datos.id_caja),
       boleta: datos.boleta,

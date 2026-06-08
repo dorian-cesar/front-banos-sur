@@ -52,7 +52,7 @@ export default function CajaPage() {
   const montoRetiroRef = useRef(null);
   const motivoRetiroRef = useRef(null);
 
-  const numeroCajaEnv = process.env.NEXT_PUBLIC_NUMERO_CAJA || '77';
+  const [numeroCaja, setNumeroCaja] = useState('');
   // Proxy local — agrega el token automáticamente desde la cookie HttpOnly
   const backendUrl = '/api/proxy';
 
@@ -64,7 +64,11 @@ export default function CajaPage() {
         return;
       }
       setUsuario(JSON.parse(userRaw));
-      cargarCaja();
+
+      const savedCaja = localStorage.getItem('numero_caja') || '';
+      setNumeroCaja(savedCaja);
+
+      cargarCaja(savedCaja);
     }
   }, []);
 
@@ -134,9 +138,10 @@ export default function CajaPage() {
     });
   };
 
-  const cargarCaja = async () => {
+  const cargarCaja = async (cajaNum) => {
     const idAperturaCierre = localStorage.getItem('id_aperturas_cierres');
     const estado = localStorage.getItem('estado_caja');
+    const activeCaja = cajaNum || localStorage.getItem('numero_caja') || '';
 
     if (!idAperturaCierre || estado !== 'abierta') {
       setCajaAbierta(false);
@@ -158,7 +163,7 @@ export default function CajaPage() {
       setCajaAbierta(true);
 
       // 2. Obtener movimientos de la caja
-      const resMovs = await fetch(`${backendUrl}/movimientos/por-caja?numero_caja=${numeroCajaEnv}`);
+      const resMovs = await fetch(`${backendUrl}/movimientos/por-caja?numero_caja=${activeCaja}`);
       if (!resMovs.ok) throw new Error('Error al cargar movimientos');
 
       const resMovsData = await resMovs.json();
@@ -195,7 +200,7 @@ export default function CajaPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          numero_caja: parseInt(numeroCajaEnv),
+          numero_caja: parseInt(numeroCaja),
           id_usuario_apertura: user.id,
           monto_inicial: parseFloat(montoInicial),
           observaciones: observacionesCaja,
@@ -345,7 +350,7 @@ export default function CajaPage() {
             // Imprimir copia de cierre
             const ahora = new Date();
             const datosImpresion = {
-              nombre_caja: numeroCajaEnv,
+              nombre_caja: numeroCaja,
               nombre_cajero: user.username,
               nombre_usuario_cierre: user.username,
               fecha_cierre: ahora.toLocaleDateString('es-CL'),
@@ -558,7 +563,7 @@ export default function CajaPage() {
               motivo: motivoRetiro,
               id_usuario: adminAutorizado.id,
               nombre_cajero: user.username,
-              numero_caja: numeroCajaEnv,
+              numero_caja: numeroCaja,
             }),
           });
 
@@ -753,7 +758,7 @@ export default function CajaPage() {
     });
 
     try {
-      const res = await fetch(`${backendUrl}/movimientos/por-caja?numero_caja=${numeroCajaEnv}`);
+      const res = await fetch(`${backendUrl}/movimientos/por-caja?numero_caja=${numeroCaja}`);
       const resData = await res.json();
 
       if (!resData.success || !resData.movimientos || !resData.movimientos.length) {
@@ -797,7 +802,7 @@ export default function CajaPage() {
         codigo: ultimoRetiro.id,
         fecha: fechaFormateada,
         hora: ultimoRetiro.hora || '--:--:--',
-        nombre_caja: numeroCajaEnv,
+        nombre_caja: numeroCaja,
         nombre_cajero: ultimoRetiro.nombre_usuario || 'Cajero',
         nombre_usuario: ultimoRetiro.autorizado_por || ultimoRetiro.nombre_usuario || 'Admin',
         monto: Math.abs(parseFloat(ultimoRetiro.monto || 0)),
@@ -941,7 +946,7 @@ export default function CajaPage() {
             <div className="card shadow-sm border-primary mb-4">
               <div className="card-body">
                 <h5 className="card-title mb-2">Caja Abierta por: {usuario?.username}</h5>
-                <p className="mb-1"><strong>N° Caja:</strong> {numeroCajaEnv}</p>
+                <p className="mb-1"><strong>N° Caja:</strong> {numeroCaja}</p>
                 <p className="mb-1"><strong>Fecha de Apertura:</strong> {datosCaja.fecha_apertura ? new Date(datosCaja.fecha_apertura).toLocaleDateString('es-CL') : '--/--/----'}</p>
                 <p className="mb-0"><strong>Monto Inicial:</strong> ${totales.inicial.toLocaleString('es-CL')}</p>
               </div>

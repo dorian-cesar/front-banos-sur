@@ -64,29 +64,32 @@ export default function HomePage() {
         fetch(
           `https://backend-banios.dev-wit.com/api/aperturas-cierres/u/${numeroCajaEnv}`,
           {
-            method: 'GET',
+            method: "GET",
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          }
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          },
         )
-        .then(res => {
-          if (res.ok) return res.json();
-          throw new Error("No se pudo restaurar");
-        })
-        .then(cajaData => {
-          if (cajaData && cajaData.id && cajaData.estado !== 'cerrada') {
-            localStorage.setItem('id_aperturas_cierres', cajaData.id);
-            localStorage.setItem('estado_caja', 'abierta');
-            localStorage.setItem('numero_caja', cajaData.numero_caja);
-            localStorage.setItem('id_usuario_apertura', cajaData.id_usuario_apertura);
-            setCajaAbierta(true);
-          }
-        })
-        .catch(err => {
-          console.error('Error al restaurar estado de la caja:', err);
-        });
+          .then((res) => {
+            if (res.ok) return res.json();
+            throw new Error("No se pudo restaurar");
+          })
+          .then((cajaData) => {
+            if (cajaData && cajaData.id && cajaData.estado !== "cerrada") {
+              localStorage.setItem("id_aperturas_cierres", cajaData.id);
+              localStorage.setItem("estado_caja", "abierta");
+              localStorage.setItem("numero_caja", cajaData.numero_caja);
+              localStorage.setItem(
+                "id_usuario_apertura",
+                cajaData.id_usuario_apertura,
+              );
+              setCajaAbierta(true);
+            }
+          })
+          .catch((err) => {
+            console.error("Error al restaurar estado de la caja:", err);
+          });
       }
 
       cargarServicios();
@@ -144,7 +147,11 @@ export default function HomePage() {
       msg.toLowerCase().includes("imprimir") ||
       msg.toLowerCase().includes("printer") ||
       msg.toLowerCase().includes("spawn") ||
-      msg.toLowerCase().includes("enoent")
+      msg.toLowerCase().includes("enoent") ||
+      msg.toLowerCase().includes("unexpected token") ||
+      msg.toLowerCase().includes("json") ||
+      msg.toLowerCase().includes("fetch") ||
+      msg.toLowerCase().includes("failed")
     ) {
       return "Error al imprimir: Por favor, verifique que la impresora esté encendida, con papel y conectada.";
     }
@@ -688,6 +695,9 @@ export default function HomePage() {
       }),
     });
 
+    if (!responsePrint.ok) {
+      throw new Error("Error al conectar con el servicio de impresión.");
+    }
     const result = await responsePrint.json();
     if (!result.success) throw new Error(result.message || "Error al imprimir");
   };
@@ -1316,7 +1326,10 @@ export default function HomePage() {
             ÚLTIMO TICKET y BOLETA IMPRESA
           </h3>
 
-          <div className="row flex-grow-1 align-items-center px-4" style={{ minHeight: "150px" }}>
+          <div
+            className="row flex-grow-1 align-items-center px-4"
+            style={{ minHeight: "150px" }}
+          >
             <div className="col-4 d-flex justify-content-center align-items-center">
               {ultimoBoleto.qrBase64 ? (
                 <img

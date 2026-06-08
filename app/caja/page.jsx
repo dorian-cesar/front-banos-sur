@@ -141,7 +141,7 @@ export default function CajaPage() {
   const cargarCaja = async (cajaNum) => {
     const idAperturaCierre = localStorage.getItem('id_aperturas_cierres');
     const estado = localStorage.getItem('estado_caja');
-    const activeCaja = cajaNum || localStorage.getItem('numero_caja') || '';
+    const activeCaja = (cajaNum && typeof cajaNum === 'string') ? cajaNum : (localStorage.getItem('numero_caja') || '');
 
     if (!idAperturaCierre || estado !== 'abierta') {
       setCajaAbierta(false);
@@ -905,7 +905,7 @@ export default function CajaPage() {
 
           <button
             className="btn w-100 mb-3"
-            onClick={cargarCaja}
+            onClick={() => cargarCaja()}
           >
             Actualizar Movimientos
           </button>
@@ -978,7 +978,8 @@ export default function CajaPage() {
                     movimientos.slice(0, 11).map((m) => {
                       const esRet =
                         m.tipo_servicio === 'RETIRO' ||
-                        (m.medio_pago && m.medio_pago.toLowerCase().includes('retiro'));
+                        (m.medio_pago && m.medio_pago.toLowerCase().includes('retiro')) ||
+                        (m.nombre_servicio && m.nombre_servicio.toLowerCase().includes('retiro'));
                       return (
                         <tr key={m.id} className="text-center">
                           <td>{m.id}</td>

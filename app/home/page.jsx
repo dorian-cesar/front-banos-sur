@@ -1190,7 +1190,6 @@ export default function HomePage() {
             src="/images/LOGOTIPO_PB_NARANJO_NORMA@2x.png"
             alt="Logo Pullman"
             className="logo-pullman"
-            style={{ height: "50px" }}
           />
           <h1
             style={{
@@ -1206,7 +1205,6 @@ export default function HomePage() {
             src="/images/wit@2x.png"
             alt="Logo Wit"
             className="logo-wit"
-            style={{ height: "50px" }}
           />
         </nav>
       </header>

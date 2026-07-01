@@ -1,0 +1,15 @@
+version: 1
+frontend:
+  phases:
+    build:
+      commands: []
+  artifacts:
+    baseDirectory: public
+    files:
+      - '**/*'
+  cache:
+    paths: []
+customRules:
+  - source: /
+    target: /login.html
+    status: '200'

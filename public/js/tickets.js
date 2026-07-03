@@ -8,7 +8,7 @@ const botonesQR = document.querySelectorAll(".generarQR");
 const QR = new QRCode(contenedorQR);
 QR.makeCode("wit");
 
-const urlBase = "https://andenes.terminal-calama.com";
+const urlBase = "https://new-caja-php.dev-wit.com";
 const url = urlBase + "/TerminalCalama/PHP/Restroom/save.php";
 const urlMovimientos =
   urlBase + "/TerminalCalama/PHP/Restroom/saveCajaBanoPoniente.php";
@@ -56,13 +56,16 @@ async function cargarServicios() {
     const token = sessionStorage.getItem("authToken");
     if (!token) throw new Error("No se encontró token de autenticación");
 
-    const res = await fetch("https://backend-banios.dev-wit.com/api/services", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+    const res = await fetch(
+      "https://new-backend-caja-banos.dev-wit.com/api/services",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!res.ok) throw new Error(`Error HTTP: ${res.status}`);
 
@@ -426,7 +429,7 @@ async function continuarConPago(metodoPago) {
     console.log(`📡 Solicitando folio base individual para ${tipo}`);
     try {
       const resFolio = await fetch(
-        "https://backend-banios.dev-wit.com/api/boletas/enviar",
+        "https://new-backend-caja-banos.dev-wit.com/api/boletas/enviar",
         {
           method: "POST",
           headers: {
@@ -760,7 +763,7 @@ async function continuarConPago(metodoPago) {
     console.log(`📡 Solicitando folio base para lote de ${cantidad} tickets`);
     try {
       const resLote = await fetch(
-        "https://backend-banios.dev-wit.com/api/boletas/enviar-lote",
+        "https://new-backend-caja-banos.dev-wit.com/api/boletas/enviar-lote",
         // "http://localhost:4000/api/boletas/enviar-lote",
         {
           method: "POST",

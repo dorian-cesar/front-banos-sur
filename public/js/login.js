@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const api_url = "https://backend-banios.dev-wit.com/api";
+  const api_url = "https://new-backend-caja-banos.dev-wit.com/api";
   //const api_url = 'http://localhost:3000/api';
 
   // Cargar SweetAlert desde CDN
@@ -34,28 +34,40 @@ document.addEventListener("DOMContentLoaded", () => {
           // Restaurar propiedades de la caja si existe una abierta
           try {
             // 1. Obtener número de caja desde backend local
-            const resCajaNum = await fetch("http://localhost:3000/api/numero-caja");
+            const resCajaNum = await fetch(
+              "http://localhost:3000/api/numero-caja",
+            );
             if (resCajaNum.ok) {
               const dataCajaNum = await resCajaNum.json();
               if (dataCajaNum && dataCajaNum.numero_caja !== undefined) {
                 const numero_caja = dataCajaNum.numero_caja;
 
                 // 2. Consultar la API para restaurar la caja
-                const resCaja = await fetch(`https://backend-banios.dev-wit.com/api/aperturas-cierres/u/${numero_caja}`, {
-                  method: "GET",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${result.token}`
-                  }
-                });
+                const resCaja = await fetch(
+                  `https://new-backend-caja-banos.dev-wit.com/api/aperturas-cierres/u/${numero_caja}`,
+                  {
+                    method: "GET",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${result.token}`,
+                    },
+                  },
+                );
 
                 if (resCaja.ok) {
                   const cajaData = await resCaja.json();
-                  if (cajaData && cajaData.id && cajaData.estado !== "cerrada") {
+                  if (
+                    cajaData &&
+                    cajaData.id &&
+                    cajaData.estado !== "cerrada"
+                  ) {
                     localStorage.setItem("id_aperturas_cierres", cajaData.id);
                     localStorage.setItem("estado_caja", "abierta");
                     localStorage.setItem("numero_caja", cajaData.numero_caja);
-                    localStorage.setItem("id_usuario_apertura", cajaData.id_usuario_apertura);
+                    localStorage.setItem(
+                      "id_usuario_apertura",
+                      cajaData.id_usuario_apertura,
+                    );
                   }
                 }
               } else {

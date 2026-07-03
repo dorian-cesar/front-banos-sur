@@ -1,29 +1,31 @@
-import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'https://backend-banios.dev-wit.com/api';
+const backendUrl =
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  "https://new-backend-caja-banos.dev-wit.com/api";
 
 async function proxyRequest(request, { params }) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('authToken')?.value;
+    const token = cookieStore.get("authToken")?.value;
 
     const { path } = await params;
-    const pathStr = Array.isArray(path) ? path.join('/') : path;
+    const pathStr = Array.isArray(path) ? path.join("/") : path;
 
     // Preservar query params
     const url = new URL(request.url);
     const targetUrl = `${backendUrl}/${pathStr}${url.search}`;
 
     const headers = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+      headers["Authorization"] = `Bearer ${token}`;
     }
 
     let body = undefined;
-    if (request.method !== 'GET' && request.method !== 'HEAD') {
+    if (request.method !== "GET" && request.method !== "HEAD") {
       const text = await request.text();
       if (text) body = text;
     }
@@ -36,10 +38,12 @@ async function proxyRequest(request, { params }) {
 
     const data = await res.json().catch(() => ({}));
     return NextResponse.json(data, { status: res.status });
-
   } catch (error) {
-    console.error('[proxy] Error:', error.message);
-    return NextResponse.json({ error: 'Error interno del proxy' }, { status: 500 });
+    console.error("[proxy] Error:", error.message);
+    return NextResponse.json(
+      { error: "Error interno del proxy" },
+      { status: 500 },
+    );
   }
 }
 

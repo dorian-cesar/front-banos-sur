@@ -65,7 +65,7 @@ export default function HomePage() {
       const token = sessionStorage.getItem("authToken") || "";
       if (token) {
         fetch(
-          `https://backend-banios.dev-wit.com/api/aperturas-cierres/u/${savedCaja}`,
+          `https://new-backend-caja-banos.dev-wit.com/api/aperturas-cierres/u/${savedCaja}`,
           {
             method: "GET",
             headers: {
@@ -187,7 +187,7 @@ export default function HomePage() {
 
   const verificarSiExistePin = async (pin) => {
     const urlCheck =
-      "https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/getUser.php";
+      "https://new-caja-php.dev-wit.com/TerminalCalama/PHP/Restroom/getUser.php";
     try {
       const response = await fetch(urlCheck, {
         method: "POST",
@@ -282,7 +282,7 @@ export default function HomePage() {
   const callApi = async (datos) => {
     // Registra la boleta en Calama
     const urlCalama =
-      "https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/save.php";
+      "https://new-caja-php.dev-wit.com/TerminalCalama/PHP/Restroom/save.php";
     const id_caja = localStorage.getItem("id_aperturas_cierres");
     const payload = {
       ...datos,
@@ -315,7 +315,7 @@ export default function HomePage() {
   };
 
   const registerUserInZKTeco = async (codigo) => {
-    const urlBase = "https://andenes.terminal-calama.com";
+    const urlBase = "https://new-caja-php.dev-wit.com";
     try {
       console.log(`Registrando en ZKTeco - Código: ${codigo}`);
 
@@ -744,13 +744,13 @@ export default function HomePage() {
 
     try {
       const res = await fetch(
-        `https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/getCodigo.php?codigo=${ticketInput.trim()}`,
+        `https://new-caja-php.dev-wit.com/TerminalCalama/PHP/Restroom/getCodigo.php?codigo=${ticketInput.trim()}`,
       );
       const data = await res.json();
       const ticket = data.find((t) => t.Codigo === ticketInput.trim());
 
       const resEstado = await fetch(
-        `https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/estadoBoleto.php?userPin=${userPin}`,
+        `https://new-caja-php.dev-wit.com/TerminalCalama/PHP/Restroom/estadoBoleto.php?userPin=${userPin}`,
       );
       const dataEstado = await resEstado.json();
       let estadoTicket = dataEstado.message || "No encontrado";
@@ -937,7 +937,7 @@ export default function HomePage() {
     setLoading(true);
     try {
       const res = await fetch(
-        "https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/load.php",
+        "https://new-caja-php.dev-wit.com/TerminalCalama/PHP/Restroom/load.php",
       );
       const data = await res.json();
       if (Array.isArray(data)) {
@@ -968,7 +968,7 @@ export default function HomePage() {
     const userPin = item.Codigo.slice(0, 6);
     try {
       const resEstado = await fetch(
-        `https://andenes.terminal-calama.com/TerminalCalama/PHP/Restroom/estadoBoleto.php?userPin=${userPin}`,
+        `https://new-caja-php.dev-wit.com/TerminalCalama/PHP/Restroom/estadoBoleto.php?userPin=${userPin}`,
       );
       const dataEstado = await resEstado.json();
       let estadoTicket = dataEstado.message || "No encontrado";
@@ -1201,11 +1201,7 @@ export default function HomePage() {
           >
             MODULO DE CAJA BAÑOS
           </h1>
-          <img
-            src="/images/wit@2x.png"
-            alt="Logo Wit"
-            className="logo-wit"
-          />
+          <img src="/images/wit@2x.png" alt="Logo Wit" className="logo-wit" />
         </nav>
       </header>
 

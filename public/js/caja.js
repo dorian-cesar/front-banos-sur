@@ -133,7 +133,7 @@ $(document).ready(function () {
 
     // ✅ 2. Obtener detalles de la caja desde la API correcta CON TOKEN
     $.ajax({
-      url: `https://backend-banios.dev-wit.com/api/aperturas-cierres/${idAperturaCierre}`,
+      url: `https://new-backend-caja-banos.dev-wit.com/api/aperturas-cierres/${idAperturaCierre}`,
       type: "GET",
       headers: {
         Authorization: "Bearer " + token,
@@ -177,7 +177,7 @@ $(document).ready(function () {
 
         // ✅ 3. Mostrar movimientos por caja
         $.ajax({
-          url: `https://backend-banios.dev-wit.com/api/movimientos/por-caja?numero_caja=${numeroCaja}`,
+          url: `https://new-backend-caja-banos.dev-wit.com/api/movimientos/por-caja?numero_caja=${numeroCaja}`,
           type: "GET",
           headers: {
             Authorization: "Bearer " + token,
@@ -385,7 +385,7 @@ $(document).ready(function () {
 
         // Hacer la petición para abrir la caja
         $.ajax({
-          url: "https://backend-banios.dev-wit.com/api/aperturas-cierres/abrir",
+          url: "https://new-backend-caja-banos.dev-wit.com/api/aperturas-cierres/abrir",
           type: "POST",
           contentType: "application/json",
           dataType: "json",
@@ -757,7 +757,7 @@ $(document).ready(function () {
       if (result.isConfirmed) {
         // Proceder con el cierre de caja
         $.ajax({
-          url: "https://backend-banios.dev-wit.com/api/aperturas-cierres/cerrar",
+          url: "https://new-backend-caja-banos.dev-wit.com/api/aperturas-cierres/cerrar",
           type: "POST",
           contentType: "application/json",
           data: JSON.stringify({
@@ -1056,7 +1056,7 @@ $(document).ready(function () {
       const email = username;
 
       $.ajax({
-        url: "https://backend-banios.dev-wit.com/api/auth/loginUser",
+        url: "https://new-backend-caja-banos.dev-wit.com/api/auth/loginUser",
         type: "POST",
         contentType: "application/json",
         dataType: "json",
@@ -1149,7 +1149,7 @@ $(document).ready(function () {
       try {
         // 1. Registrar el retiro
         const response = await $.ajax({
-          url: "https://backend-banios.dev-wit.com/api/aperturas-cierres/retiro",
+          url: "https://new-backend-caja-banos.dev-wit.com/api/aperturas-cierres/retiro",
           type: "POST",
           headers: {
             Authorization: "Bearer " + token,
@@ -1369,7 +1369,7 @@ $(document).ready(function () {
     try {
       // 1. Obtener movimientos de la caja activa
       const resMovimientos = await $.ajax({
-        url: `https://backend-banios.dev-wit.com/api/movimientos/por-caja?numero_caja=${numeroCaja}`,
+        url: `https://new-backend-caja-banos.dev-wit.com/api/movimientos/por-caja?numero_caja=${numeroCaja}`,
         type: "GET",
         headers: {
           Authorization: "Bearer " + token,

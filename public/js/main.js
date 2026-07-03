@@ -84,11 +84,14 @@ document.addEventListener("DOMContentLoaded", () => {
     idAperturaNum !== idUsuarioNum
   ) {
     // Obtener información del usuario que abrió la caja
-    fetch(`https://backend-banios.dev-wit.com/api/users/${idUsuarioApertura}`, {
-      headers: {
-        Authorization: "Bearer " + token,
+    fetch(
+      `https://new-backend-caja-banos.dev-wit.com/api/users/${idUsuarioApertura}`,
+      {
+        headers: {
+          Authorization: "Bearer " + token,
+        },
       },
-    })
+    )
       .then((response) => {
         if (!response.ok) {
           throw new Error("Error al obtener usuario: " + response.status);

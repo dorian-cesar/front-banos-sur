@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const api_url = "https://backend-banios.dev-wit.com/api";
+  const api_url = "https://new-backend-caja-banos.dev-wit.com/api";
   //const api_url = 'http://localhost:3000/api';
 
   // Cargar SweetAlert desde CDN
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // 2. Consultar la API para restaurar la caja
                 const resCaja = await fetch(
-                  `https://backend-banios.dev-wit.com/api/aperturas-cierres/u/${numero_caja}`,
+                  `https://new-backend-caja-banos.dev-wit.com/api/aperturas-cierres/u/${numero_caja}`,
                   {
                     method: "GET",
                     headers: {
